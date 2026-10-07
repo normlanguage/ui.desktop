@@ -58,6 +58,9 @@ public class FxApplication {
   private CloseRequest? pendingClose = null
   private Boolean closing
   private Boolean started
+  private Integer dispatchDepth = 0
+  private Boolean closePending = false
+  private Exception? callbackFailure = null
 
   FxApplication(String title, String? stylesheet = null, Double width = 760.0, Double height = 680.0) {
     this.title = title
@@ -102,7 +105,7 @@ public class FxApplication {
         window.setMinHeight(320.0)
         window.setOnCloseRequest((event) { event!!.consume() this.dispatch(() { this.requestClose() }) })
         build()
-        if !closing { window.show() }
+        if !closing && !closePending { window.show() }
       })
       task.await()
     } finally {
@@ -143,7 +146,7 @@ public class FxApplication {
   public Void show() { checkFxThread() if !closing { stage?.show() stage?.setIconified(false) stage?.toFront() } }
   public Void requestClose() {
     checkFxThread()
-    if closing || pendingClose != null { return }
+    if closing || closePending || pendingClose != null { return }
     var callback = closeRequested
     if callback == null { this.close() return }
     var request = CloseRequest((approved) {
@@ -153,7 +156,12 @@ public class FxApplication {
     pendingClose = request
     callback(request)
   }
-  public Void close() { checkFxThread() this.finish(null) }
+  public Void close() {
+    checkFxThread()
+    if closing { return }
+    closePending = true
+    if dispatchDepth == 0 { this.finish(null) }
+  }
   public Void later(Function<Void()> action) { platformRunLater(() { this.dispatch(action) }) }
 
   public Void trackTermination(Task<Unit> termination) {
@@ -181,18 +189,23 @@ public class FxApplication {
   }
 
   Void dispatch(Function<Void()> action) {
-    if closing { return }
+    if closing || closePending || callbackFailure != null { return }
+    dispatchDepth = dispatchDepth + 1
     Boolean returned = false
     try { action() returned = true }
-    catch Exception error { this.finish(error) }
+    catch Exception error { if callbackFailure == null { callbackFailure = error } }
     finally {
-      if !returned && !closing { this.finish(Exception(message: "GUI callback aborted")) }
+      if !returned && callbackFailure == null { callbackFailure = Exception(message: "GUI callback aborted") }
+      dispatchDepth = dispatchDepth - 1
+      if dispatchDepth == 0 && (closePending || callbackFailure != null) { this.finish(callbackFailure) }
     }
   }
 
   private Void finish(Exception? failure) {
     if closing { return }
     closing = true
+    closePending = false
+    callbackFailure = null
     pendingClose?.cancel()
     pendingClose = null
     closeRequested = null

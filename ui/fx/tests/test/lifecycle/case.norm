@@ -87,6 +87,45 @@ Void verifiesJavaFxLifecycleAndControls() {
     cleanupFailure.run(build: () { cleanupFailure.close() }, dispose: () { throw cleanupError })
     throw Exception(message: "cleanup failure was lost")
   } catch Exception error { require(condition: error == cleanupError, message: "cleanup failure identity") }
+  var closesAfterFailure = FxApplication("Failure before close")
+  var callbackFailure = Exception(message: "failure before finally close")
+  var callbackState = Observations()
+  try {
+    closesAfterFailure.run(build: () {
+      closesAfterFailure.later(() {
+        try { throw callbackFailure }
+        finally { closesAfterFailure.close() }
+      })
+    }, dispose: () { callbackState.edits = callbackState.edits + 1 throw Exception(message: "secondary cleanup failure") })
+    throw Exception(message: "finally close swallowed the callback failure")
+  } catch Exception error { require(condition: error == callbackFailure, message: "callback failure wins over close requested in finally") }
+  require(condition: callbackState.edits == 1, message: "failed callback disposes once")
+  var nested = FxApplication("Nested callback failure")
+  var nestedState = Observations()
+  try {
+    nested.run(build: () {
+      var node = nested.text()
+      nested.later(() {
+        node.dispatch(() {
+          try { throw callbackFailure }
+          finally { nested.close() }
+        })
+        require(condition: !nestedState.disposed, message: "nested close waits for the outer callback to exit")
+      })
+    }, dispose: () { nestedState.disposed = true nestedState.edits = nestedState.edits + 1 })
+    throw Exception(message: "nested callback failure was lost")
+  } catch Exception error { require(condition: error == callbackFailure, message: "nested callback preserves the first failure") }
+  require(condition: nestedState.edits == 1, message: "nested callback disposes once")
+  var closesAfterAbort = FxApplication("Abort before close")
+  try {
+    closesAfterAbort.run(build: () {
+      closesAfterAbort.later(() {
+        try { require(condition: false, message: "fatal before close") }
+        finally { closesAfterAbort.close() }
+      })
+    }, dispose: () {})
+    throw Exception(message: "finally close swallowed the callback abort")
+  } catch Exception error { require(condition: error.message == "GUI callback aborted", message: "callback abort wins over finally close") }
   var aborted = FxApplication("Norm JavaFX abort")
   try {
     aborted.run(build: () { require(condition: false, message: "fatal callback") }, dispose: () {})
