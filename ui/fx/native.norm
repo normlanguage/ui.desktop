@@ -1,6 +1,6 @@
 package ui.fx
 
-import theme.Theme
+import ui.theme.Theme
 import ui.ThemedRenderNode
 import ui.ConfiguredRenderNode
 import ui.UiConfiguration
@@ -17,7 +17,7 @@ import ui.fx.FxNodePeer
 import ui.describeChildren
 import ui.fx.fxHandle
 import ui.fx.FxNode
-import fx.graphics.Node
+import javafx.Node
 import std.core.Exception
 
 private class ComponentView<T> implements NativeView {

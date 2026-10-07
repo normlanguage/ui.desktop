@@ -2,9 +2,9 @@ package ui.fx.test.lifecycle
 
 import std.core.Exception
 import ui.fx.FxApplication
-import fx.controls.buttonNew
-import fx.controls.labelNew
-import fx.graphics.vBoxNew
+import javafx.buttonNew
+import javafx.labelNew
+import javafx.vBoxNew
 
 class Observations { Integer edits = 0 Boolean disposed = false }
 

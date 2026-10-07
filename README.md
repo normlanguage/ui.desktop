@@ -18,6 +18,6 @@ Rendering adapter: [backend.norm](ui/fx/backend.norm). Desktop entry points: [de
 
 Layouts: [public protocol implementation](ui/fx/layout.norm), [layout adapter](src/main/java/dev/normlanguage/ui/fx/LayoutPane.java). Theme and configuration projection: [theme.norm](ui/fx/theme.norm). Generic native component integration: [native.norm](ui/fx/native.norm).
 
-The [foundation sample](samples/foundation/application.norm) uses `ui`, `theme`, and this backend without a component kit.
+The [foundation sample](samples/foundation/application.norm) uses `ui`, `ui.theme`, and this backend without a component kit.
 
 Build the Java adapter with `./gradlew.bat publish`, copy `build/repository` into the Norm Maven cache, then package the module. [Package workflow](.github/workflows/package.yml) owns the reproducible CI sequence. Verification: [Java layout contracts](src/test/java/dev/normlanguage/ui/fx/LayoutPaneTest.java), [Norm scene integration](ui/fx/tests/test/layout/case.norm).

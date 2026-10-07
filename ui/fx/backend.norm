@@ -10,7 +10,7 @@ import ui.ThemedRenderNode
 import ui.ConfiguredRenderNode
 import ui.UiConfiguration
 import ui.WidgetRole
-import theme.Theme
+import ui.theme.Theme
 import ui.TextFieldRenderNode
 import ui.TextFieldHandle
 import ui.TextFieldControl

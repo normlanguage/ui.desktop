@@ -6,23 +6,23 @@ import std.concurrent.Completion
 import std.concurrent.Task
 import std.concurrent.completion
 import std.context.currentContext
-import fx.graphics.Stage
-import fx.graphics.Node
-import fx.graphics.Scene
-import fx.graphics.StackPane
-import fx.graphics.stageNew
-import fx.graphics.stackPaneNew
-import fx.graphics.sceneNew
-import fx.graphics.platformRunLater
-import fx.graphics.platformIsFxApplicationThread
-import fx.controls.Alert
-import fx.controls.AlertAlertType
-import fx.controls.alertNew
-import fx.controls.labelNew
-import fx.controls.buttonNew
-import fx.controls.textFieldNew
-import fx.controls.textAreaNew
-import fx.controls.checkBoxNew
+import javafx.Stage
+import javafx.Node
+import javafx.Scene
+import javafx.StackPane
+import javafx.stageNew
+import javafx.stackPaneNew
+import javafx.sceneNew
+import javafx.platformRunLater
+import javafx.platformIsFxApplicationThread
+import javafx.Alert
+import javafx.AlertAlertType
+import javafx.alertNew
+import javafx.labelNew
+import javafx.buttonNew
+import javafx.textFieldNew
+import javafx.textAreaNew
+import javafx.checkBoxNew
 
 public class FxApplication {
   private String title

@@ -13,10 +13,10 @@ import ui.UiProvider
 import ui.UiConfiguration
 import ui.button
 import ui.fx.DesktopApp
-import theme.ThemeManager
-import theme.ThemeDefinition
-import theme.ThemeMode
-import theme.Color
+import ui.theme.ThemeManager
+import ui.theme.ThemeDefinition
+import ui.theme.ThemeMode
+import ui.theme.Color
 
 class Foundation implements Widget {
   ThemeManager theme

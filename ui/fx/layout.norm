@@ -20,12 +20,12 @@ import ui.WidgetRole
 import ui.MainAlignment as CoreMainAlignment
 import ui.CrossAlignment as CoreCrossAlignment
 import ui.DockArea as CoreDockArea
-import theme.Theme
-import fx.graphics.Node
-import fx.graphics.insetsNew
-import fx.controls.ScrollPane
-import fx.controls.ScrollPaneScrollBarPolicy
-import fx.controls.scrollPaneNew
+import ui.theme.Theme
+import javafx.Node
+import javafx.insetsNew
+import javafx.ScrollPane
+import javafx.ScrollPaneScrollBarPolicy
+import javafx.scrollPaneNew
 import std.core.Exception
 
 class FxLayoutRenderNode implements FxNodePeer, ThemedRenderNode, ConfiguredRenderNode {

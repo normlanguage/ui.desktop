@@ -5,10 +5,10 @@ import std.core.Exception
 import std.core.Unit
 import std.context.currentContext
 import std.context.withContext
-import fx.graphics.platformStartup
-import fx.graphics.platformExit
-import fx.graphics.platformSetImplicitExit
-import fx.graphics.platformIsFxApplicationThread
+import javafx.platformStartup
+import javafx.platformExit
+import javafx.platformSetImplicitExit
+import javafx.platformIsFxApplicationThread
 
 class FxRuntime {}
 

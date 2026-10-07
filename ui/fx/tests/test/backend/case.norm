@@ -16,20 +16,20 @@ import ui.ThemeProvider
 import ui.UiProvider
 import ui.UiConfiguration
 import ui.TextDirection
-import fx.graphics.NodeOrientation
+import javafx.NodeOrientation
 import ui.fx.fxConfigurationStyle
-import theme.ThemeManager
-import theme.ThemeDefinition
-import theme.ThemeMode
-import theme.Color
-import fx.graphics.Pane
+import ui.theme.ThemeManager
+import ui.theme.ThemeDefinition
+import ui.theme.ThemeMode
+import ui.theme.Color
+import javafx.Pane
 import ui.fx.FxApplication
 import ui.fx.JavaFxBackend
 import ui.fx.JavaFxScheduler
 import ui.fx.fxHandle
-import fx.controls.Label
-import fx.controls.TextArea
-import fx.controls.TextField
+import javafx.Label
+import javafx.TextArea
+import javafx.TextField
 
 Void rendersCoreDescriptorsAndReleasesTypedReferencesBeforeShowingAWindow() {
   var application = FxApplication("Renderer bridge verification")

@@ -1,14 +1,14 @@
 package ui.fx
 
 import ui.WidgetRole
-import theme.Theme
-import theme.Tone
-import theme.Appearance
-import theme.ControlState
+import ui.theme.Theme
+import ui.theme.Tone
+import ui.theme.Appearance
+import ui.theme.ControlState
 import ui.UiConfiguration
 import ui.TextDirection
-import fx.graphics.Node
-import fx.graphics.NodeOrientation
+import javafx.Node
+import javafx.NodeOrientation
 
 String fxConfigurationStyle(UiConfiguration configuration) {
   var escaped = StringBuilder()
