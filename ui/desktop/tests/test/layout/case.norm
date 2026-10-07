@@ -1,0 +1,76 @@
+package ui.desktop.test.layout
+
+import ui.Flex
+import ui.FlexItem
+import ui.Grid
+import ui.GridItem
+import ui.GridBreakpoint
+import ui.Box
+import ui.SizeConstraints
+import ui.Dimension
+import ui.CrossAlignment
+import ui.NodeKey
+import ui.text
+import ui.Scroll
+import ui.Axis
+import ui.Renderer
+import ui.desktop.JavaFxBackend
+import ui.desktop.JavaFxScheduler
+import ui.desktop.FxApplication
+import ui.desktop.internal.LayoutPane
+import ui.desktop.fxHandle
+import ui.desktop.native.ScrollPane
+
+Void reconcilesPublicLayoutsInARealJavaFxScene() {
+  var application = FxApplication("Layout protocol verification")
+  var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application))
+  var completed = Verification()
+  application.run(build: () {
+    renderer.render(Flex(cross: CrossAlignment.Stretch, gap: 10.0, items: [
+      FlexItem(content: Box(key: NodeKey.Named("a"), content: text("A"), size: SizeConstraints(width: Dimension.Fixed(100.0), height: Dimension.Fixed(30.0))), grow: 1.0),
+      FlexItem(content: Box(key: NodeKey.Named("b"), content: text("B"), size: SizeConstraints(width: Dimension.Fill, height: Dimension.Fill)), grow: 3.0)
+    ]))
+    application.root(fxHandle(renderer.node()))
+    var original = fxHandle(renderer.node()).nativeNode()
+    switch original {
+      case LayoutPane pane {
+        pane.resize(arg0: 410.0, arg1: 80.0)
+        pane.layout()
+        require(condition: pane.getChildren()!!.size() == 2, message: "public flex reaches native pane")
+        var first = pane.getChildren()!!.get(0)!!
+        var second = pane.getChildren()!!.get(1)!!
+        renderer.render(Flex(gap: 20.0, items: [
+          FlexItem(content: Box(key: NodeKey.Named("a"), content: text("A"), size: SizeConstraints(width: Dimension.Fixed(100.0), height: Dimension.Fixed(30.0)))),
+          FlexItem(content: Box(key: NodeKey.Named("b"), content: text("B")))
+        ]))
+        require(condition: fxHandle(renderer.node()).nativeNode() == original, message: "layout updates preserve container")
+        require(condition: pane.getChildren()!!.get(0) == first, message: "layout updates preserve child")
+        renderer.render(Flex(items: [
+          FlexItem(content: Box(key: NodeKey.Named("b"), content: text("B"))),
+          FlexItem(content: Box(key: NodeKey.Named("a"), content: text("A")))
+        ]))
+        require(condition: pane.getChildren()!!.get(0) == second && pane.getChildren()!!.get(1) == first, message: "keyed reorder preserves both native children")
+      }
+      case _ { require(condition: false, message: "Flex uses layout backend") }
+    }
+    renderer.render(Grid(columns: 2, gap: 10.0, breakpoints: [GridBreakpoint(minimumWidth: 400.0, columns: 3)], items: [GridItem(content: text("A"), span: 2), GridItem(content: text("B"))]))
+    switch fxHandle(renderer.node()).nativeNode() {
+      case LayoutPane pane {
+        pane.resize(arg0: 500.0, arg1: 200.0)
+        pane.layout()
+        require(condition: pane.getChildren()!!.get(1)!!.getLayoutX() > 300.0, message: "responsive grid places span")
+      }
+      case _ { require(condition: false, message: "Grid uses layout backend") }
+    }
+    renderer.render(Scroll(child: text("scroll"), axis: Axis.Horizontal, fitWidth: false, fitHeight: true))
+    switch fxHandle(renderer.node()).nativeNode() {
+      case ScrollPane scroll { require(condition: scroll.isFitToHeight() && !scroll.isFitToWidth(), message: "scroll exposes both fit axes") }
+      case _ { require(condition: false, message: "scroll uses native ScrollPane") }
+    }
+    completed.value = true
+    application.close()
+  }, dispose: renderer.close)
+  require(condition: completed.value, message: "all layout checks completed on JavaFX thread")
+}
+
+class Verification { Boolean value = false }

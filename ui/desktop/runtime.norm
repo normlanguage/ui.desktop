@@ -1,0 +1,37 @@
+package ui.desktop
+
+import std.concurrent.completion
+import std.core.Exception
+import std.core.Unit
+import std.context.currentContext
+import std.context.withContext
+import ui.desktop.native.platformStartup
+import ui.desktop.native.platformExit
+import ui.desktop.native.platformSetImplicitExit
+import ui.desktop.native.platformIsFxApplicationThread
+
+class FxRuntime {}
+
+public Void withFxRuntime(Function<Void()> action) {
+  if currentContext<FxRuntime>() != null { action() return }
+  if platformIsFxApplicationThread() { throw Exception(message: "GUI runtime requires a non-UI thread") }
+  var ready = completion<Unit>()
+  var task = ready.task()
+  try {
+    platformStartup(() {
+      try {
+        platformSetImplicitExit(false)
+        ready.succeed(Unit.Value)
+      } catch Exception error { ready.fail(error) }
+    })
+    task.await()
+    withContext<FxRuntime>(value: FxRuntime(), action: action)
+  } finally {
+    platformExit()
+    ready.close()
+  }
+}
+
+Void checkFxThread() {
+  if !platformIsFxApplicationThread() { throw Exception(message: "GUI operation requires the UI thread") }
+}

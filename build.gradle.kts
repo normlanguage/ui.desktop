@@ -17,6 +17,14 @@ tasks.withType<JavaCompile>().configureEach { options.encoding = "UTF-8"; option
 tasks.withType<Test>().configureEach { useJUnitPlatform(); jvmArgs("--enable-native-access=ALL-UNNAMED"); testLogging { events("passed", "failed") } }
 tasks.withType<Jar>().configureEach { from("LICENSE") { into("META-INF") } }
 tasks.withType<AbstractArchiveTask>().configureEach { isPreserveFileTimestamps = false; isReproducibleFileOrder = true }
+tasks.register<Exec>("verifyNativeImageMetadata") {
+    doFirst {
+        val graphics = configurations.compileClasspath.get().files.single {
+            it.name.startsWith("javafx-graphics-") && it.name.endsWith("-win.jar")
+        }
+        commandLine("python", "scripts/verify-native-image-metadata.py", graphics.absolutePath)
+    }
+}
 publishing {
     publications { create<MavenPublication>("library") { from(components["java"]) } }
     repositories { maven { url = uri(layout.buildDirectory.dir("repository")) } }

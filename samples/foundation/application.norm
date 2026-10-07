@@ -12,7 +12,8 @@ import ui.ThemeProvider
 import ui.UiProvider
 import ui.UiConfiguration
 import ui.button
-import ui.fx.DesktopApp
+import ui.desktop.DesktopApp
+import ui.desktop.CloseRequest
 import ui.theme.ThemeManager
 import ui.theme.ThemeDefinition
 import ui.theme.ThemeMode
@@ -22,6 +23,12 @@ class Foundation implements Widget {
   ThemeManager theme
   private Boolean dark = false
   private Integer count = 0
+  private CloseRequest? closeRequest = null
+
+  Void confirmClose(CloseRequest request) {
+    if count == 0 { request.accept() }
+    else { closeRequest = request }
+  }
 
   Widget build() {
     UiProvider(configuration: UiConfiguration(fontSize: 16.0), child:
@@ -37,12 +44,23 @@ class Foundation implements Widget {
                 theme.setMode(if dark { ThemeMode.Dark } else { ThemeMode.Light })
               })
             }
+            if closeRequest != null {
+              Text("计数尚未保存，确认退出？")
+              Row(gap: 12.0) {
+                button(key: NodeKey.Named("close-cancel"), text: "继续编辑", action: () {
+                  closeRequest?.cancel()
+                  closeRequest = null
+                })
+                button(key: NodeKey.Named("close-accept"), text: "放弃并退出", action: () { closeRequest?.accept() })
+              }
+            }
           })))
   }
 }
 
 main() {
   var theme = ThemeManager(definition: ThemeDefinition(primary: Color(hex: "#1677FF")))
-  try { DesktopApp(title: "Norm UI foundation", home: Foundation(theme: theme), width: 640.0, height: 360.0).run() }
+  var home = Foundation(theme: theme)
+  try { DesktopApp(title: "Norm UI foundation", home: home, onCloseRequested: home.confirmClose, width: 640.0, height: 360.0).run() }
   finally { theme.close() }
 }

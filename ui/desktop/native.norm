@@ -1,0 +1,114 @@
+package ui.desktop
+
+import ui.theme.Theme
+import ui.ThemedRenderNode
+import ui.ConfiguredRenderNode
+import ui.UiConfiguration
+import ui.Widget
+import ui.View
+import ui.ViewContent
+import ui.NativeView
+import ui.NodeKey
+import ui.ViewScope
+import ui.RenderNode
+import ui.RenderBackend
+import ui.desktop.JavaFxBackend
+import ui.desktop.FxNodePeer
+import ui.describeChildren
+import ui.desktop.fxHandle
+import ui.desktop.FxNode
+import ui.desktop.native.Node
+import std.core.Exception
+
+private class ComponentView<T> implements NativeView {
+  String identity
+  List<Widget> content
+  Function<T()> initialize
+  Function<Node(T)> projectNode
+  Function<Void(T, ViewScope)> apply
+  Function<Void(T, List<Node>)>? arrange
+  Function<List<Widget>(T)>? childrenBuilder
+  Function<Void(T, UiConfiguration)>? applyConfiguration
+  Function<Void(T, Theme?)>? applyTheme
+  Function<Void(T)> release
+
+  String kind() { identity }
+  List<View> children(RenderNode node) {
+    var buildChildren = childrenBuilder
+    if buildChildren == null { return describeChildren(content) }
+    switch node {
+      case ComponentNode<T> current { break describeChildren(buildChildren(current.control)) }
+      case _ { throw Exception(message: "native component node type changed") }
+    }
+  }
+  RenderNode create(RenderBackend backend, ViewScope scope) {
+    switch backend {
+      case JavaFxBackend fx {
+        var control = scope.within<T>(initialize)
+        try {
+          var peer = fx.fxApplication().adopt(projectNode(control))
+          break ComponentNode<T>(control: control, peer: peer, scope: scope, specification: this)
+        } catch Exception failure { release(control) throw failure }
+      }
+      case _ { throw Exception(message: "native component requires a JavaFX backend") }
+    }
+  }
+}
+
+private class ComponentNode<T> implements FxNodePeer, ThemedRenderNode, ConfiguredRenderNode {
+  T control
+  FxNode peer
+  ViewScope scope
+  ComponentView<T> specification
+  Boolean closed = false
+  Theme? currentTheme = null
+  UiConfiguration currentConfiguration = UiConfiguration()
+
+  FxNode fxNode() { peer }
+  Void configure(UiConfiguration configuration) {
+    currentConfiguration = configuration
+    var apply = specification.applyConfiguration
+    if apply != null { apply(control, configuration) }
+  }
+  Void theme(Theme? theme) {
+    currentTheme = theme
+    var apply = specification.applyTheme
+    if apply != null { apply(control, theme) }
+  }
+  Void update(View view) {
+    switch view.content {
+      case Native(ComponentView<T> next) {
+        specification = next
+        peer.appearance(view)
+        peer.enabled(view.enabled)
+        next.apply(control, scope)
+        var applyConfiguration = next.applyConfiguration
+        if applyConfiguration != null { applyConfiguration(control, currentConfiguration) }
+        var applyTheme = next.applyTheme
+        if applyTheme != null { applyTheme(control, currentTheme) }
+      }
+      case _ { throw Exception(message: "component descriptor type changed") }
+    }
+  }
+  Void children(List<RenderNode> children) {
+    var arrange = specification.arrange
+    if arrange != null {
+      arrange(control, [for (child : children) fxHandle(child).nativeNode()])
+    }
+  }
+  Void close() {
+    if closed { return }
+    closed = true
+    try { specification.release(control) }
+    finally { peer.close() }
+  }
+}
+
+View nativeComponent<T>(String kind, Function<T()> create, Function<Node(T)> node,
+    Function<Void(T, ViewScope)> update, Function<Void(T)> close,
+    List<Widget> children = [], Function<Void(T, List<Node>)>? arrange = null,
+    Function<List<Widget>(T)>? childrenBuilder = null,
+    NodeKey? key = null, Boolean enabled = true, Function<Void(T, Theme?)>? applyTheme = null, Function<Void(T, UiConfiguration)>? applyConfiguration = null) {
+  View(key: key, enabled: enabled, content: ViewContent.Native(ComponentView<T>(identity: kind,
+    content: children, childrenBuilder: childrenBuilder, initialize: create, projectNode: node, apply: update, arrange: arrange, release: close, applyTheme: applyTheme, applyConfiguration: applyConfiguration)))
+}

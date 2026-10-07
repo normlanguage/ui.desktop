@@ -1,6 +1,6 @@
 param(
     [string]$NormHome = (Join-Path (Split-Path $PSScriptRoot -Parent) '.norm-home'),
-    [string]$ModulePath = 'ui/fx'
+    [string]$ModulePath = 'ui/desktop'
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent

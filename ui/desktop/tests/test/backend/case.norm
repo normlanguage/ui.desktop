@@ -1,0 +1,108 @@
+package ui.desktop.test.backend
+
+import std.testing.Test
+import ui.Binding
+import ui.Key
+import ui.ViewReference
+import ui.RenderNode
+import std.io.Resource
+import ui.desktop.FxNode
+import ui.TextFieldHandle
+import ui.TextFieldReference
+import ui.View
+import ui.ViewContent
+import ui.Renderer
+import ui.ThemeProvider
+import ui.UiProvider
+import ui.UiConfiguration
+import ui.TextDirection
+import ui.desktop.native.NodeOrientation
+import ui.desktop.fxConfigurationStyle
+import ui.theme.ThemeManager
+import ui.theme.ThemeDefinition
+import ui.theme.ThemeMode
+import ui.theme.Color
+import ui.desktop.native.Pane
+import ui.desktop.FxApplication
+import ui.desktop.JavaFxBackend
+import ui.desktop.JavaFxScheduler
+import ui.desktop.fxHandle
+import ui.desktop.native.Label
+import ui.desktop.native.TextArea
+import ui.desktop.native.TextField
+
+Void rendersCoreDescriptorsAndReleasesTypedReferencesBeforeShowingAWindow() {
+  var application = FxApplication("Renderer bridge verification")
+  var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application))
+  var key = Key<TextFieldHandle>()
+  var model = Model()
+  var text = Binding<String>(read: () { model.text }, write: (String value) { model.text = value })
+  application.run(build: () {
+    renderer.render(View(content: ViewContent.Input(placeholder: "input", text: text, submit: (String value) {}), reference: TextFieldReference(key)))
+    var native = fxHandle(renderer.node()).nativeNode()
+    switch native {
+      case TextField input { require(condition: input.getText() == "bound text", message: "core binding reaches native control") }
+      case _ { require(condition: false, message: "input descriptor selects TextField") }
+    }
+    require(condition: key.current != null && key.current!!.text == "bound text", message: "renderer connects typed input reference")
+    renderer.render(View(content: ViewContent.Text("replacement")))
+    require(condition: key.current == null, message: "replacement releases prior input reference")
+    switch fxHandle(renderer.node()).nativeNode() {
+      case Label label {}
+      case _ { require(condition: false, message: "text descriptor selects Label") }
+    }
+    renderer.render(View(content: ViewContent.Multiline(placeholder: "notes", text: text, rows: 5, editable: true)))
+    switch fxHandle(renderer.node()).nativeNode() {
+      case TextArea input {
+        require(condition: input.getText() == "bound text", message: "multiline preserves bound text")
+        input.setText("edited text")
+        require(condition: model.text == "edited text", message: "native multiline editing updates core binding")
+      }
+      case _ { require(condition: false, message: "multiline selects TextArea") }
+    }
+    var themes = ThemeManager(ThemeDefinition(primary: Color(hex: "#1677ff")))
+    renderer.render(ThemeProvider(source: themes, child: View(content: ViewContent.Text("theme"))))
+    var parent = fxHandle(renderer.node()).nativeNode()
+    switch parent {
+      case Pane pane {
+        var retained = pane.getChildren()!!.get(0)!!
+        var initialStyle = retained.getStyle()
+        themes.setMode(ThemeMode.Dark)
+        require(condition: pane.getChildren()!!.get(0) == retained, message: "theme switching retains JavaFX node")
+        require(condition: retained.getStyle() != initialStyle, message: "theme switching projects new native styles")
+        model.themeVerified = true
+      }
+      case _ { require(condition: false, message: "theme provider uses native container") }
+    }
+    var nativeKey = Key<FxNode>()
+    var themedChild = ThemeProvider(source: themes, child: View(content: ViewContent.Text("configured"), reference: FxReference(nativeKey)))
+    renderer.render(UiProvider(child: themedChild))
+    var retained = nativeKey.current!!.nativeNode()
+    renderer.render(UiProvider(child: themedChild, configuration: UiConfiguration(fontFamily: "Arial", fontSize: 20.0, direction: TextDirection.RightToLeft, motionEnabled: false)))
+    require(condition: nativeKey.current!!.nativeNode() == retained, message: "configuration change preserves child node")
+    require(condition: retained.getNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT, message: "direction reaches native node")
+    require(condition: retained.getStyle()!!.contains("20.0px"), message: "font size reaches native styles")
+    themes.setMode(ThemeMode.Light)
+    require(condition: retained.getStyle()!!.contains("20.0px"), message: "theme changes preserve typography projection")
+    model.configurationVerified = true
+    themes.close()
+    application.close()
+  }, dispose: renderer.close)
+  require(condition: key.current == null, message: "shutdown leaves no reference")
+  require(condition: model.themeVerified, message: "native theme assertions completed")
+  require(condition: model.configurationVerified, message: "native configuration assertions completed")
+}
+
+
+class Model { String text = "bound text" Boolean themeVerified = false Boolean configurationVerified = false }
+
+@Test
+Void escapesFontFamilyCssSyntax() {
+  var style = fxConfigurationStyle(UiConfiguration(fontFamily: "A\"B\\C"))
+  require(condition: style == "-fx-font-family:\"A\\\"B\\\\C\";-fx-font-size:14.0px;", message: "font family syntax cannot escape quoted CSS value")
+}
+
+value FxReference implements ViewReference {
+  Key<FxNode> key
+  Resource connect(RenderNode node) { key.connect(fxHandle(node)) }
+}

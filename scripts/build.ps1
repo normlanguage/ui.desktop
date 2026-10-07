@@ -1,7 +1,7 @@
 param([string]$NormHome = (Join-Path (Split-Path $PSScriptRoot -Parent) '.norm-home'))
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$licenseDirectory = Join-Path $root 'ui/fx/resources/META-INF/licenses/ui.fx'
+$licenseDirectory = Join-Path $root 'ui/desktop/resources/META-INF/licenses/ui.desktop'
 New-Item -ItemType Directory -Force $licenseDirectory | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'LICENSE') -Destination (Join-Path $licenseDirectory 'LICENSE') -Force
 & (Join-Path $root 'gradlew.bat') -p $root publish --console=plain

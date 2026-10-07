@@ -1,1 +1,1 @@
-rootProject.name = "ui-fx-layout"
+rootProject.name = "ui-desktop-layout"

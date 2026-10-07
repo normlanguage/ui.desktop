@@ -21,7 +21,7 @@ jobs:
           lfs: true
       - uses: normlanguage/registry/.github/actions/setup-norm@549b0746e992a9c6c698b3c701fa2dd88cccdd4b
         with:
-          source-ref: 02691fed8b6906cc69ef6d21b6e9edd61930981d
+          source-ref: 00589dd5f1a457ed756f0dc163772e1cb42ffa1c
       - uses: actions/setup-java@v4
         with:
           distribution: oracle
@@ -29,7 +29,7 @@ jobs:
       - name: Build layout adapter
         shell: pwsh
         run: |
-          ./gradlew.bat test --tests dev.normlanguage.ui.fx.LayoutPaneTest publish --console=plain
+          ./gradlew.bat test --tests dev.normlanguage.ui.desktop.LayoutPaneTest verifyNativeImageMetadata publish --console=plain
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $cache = Join-Path $HOME '.norm/cache/maven'
           New-Item -ItemType Directory -Force $cache | Out-Null
@@ -37,12 +37,12 @@ jobs:
       - uses: normlanguage/registry/.github/actions/package-module@1c5b2948a0c788f1aa21542255eb1a445027ab29
         id: package
         with:
-          module-path: ui/fx
+          module-path: ui/desktop
           cache-directory: ~/.norm/cache/packages/github
       - name: Verify module tests
         shell: bash
         run: |
-          module_dir="ui/fx"
+          module_dir="ui/desktop"
           if [[ -d "$module_dir/tests" ]]; then
             timeout 300 norm test "$module_dir"
           fi
