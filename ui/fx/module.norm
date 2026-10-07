@@ -1,5 +1,12 @@
 Module module() {
-  module(name: "ui.fx", version: 4,
-    exports: ["application", "node", "runtime", "backend", "desktop"],
-    dependencies: [dependency(repository: "github", name: "ui", version: 6), dependency(repository: "github", name: "di", version: 3), dependency(repository: "github", name: "fx.controls", version: 3)])
+  module(name: "ui.fx", version: 5,
+    exports: ["LayoutPane", "LayoutMode", "FxMainAlignment", "FxCrossAlignment", "FxDockArea", "DimensionMode", "application", "node", "runtime", "backend", "desktop", "native", "theme"],
+    dependencies: [dependency(repository: "github", name: "theme", version: 1), dependency(repository: "github", name: "ui", version: 7), dependency(repository: "github", name: "di", version: 3), dependency(repository: "github", name: "fx.controls", version: 4)], binding: jarBinding(target: mavenJar(group: "dev.normlanguage", artifact: "ui-fx-layout", version: "1", resolution: sha256("a91f4b01598fdfc8d6aca5612adf20a150653b1555630face46caeb4ddac9ebe")), api: [
+      jarType(name: "dev.normlanguage.ui.fx.LayoutPane", members: ["new", "configureFlex", "flexItem", "configureGrid", "gridItem", "clearBreakpoints", "breakpoint", "configureStack", "dockItem", "configureMasonry", "configureWidth", "configureHeight"]),
+      jarType(name: "dev.normlanguage.ui.fx.LayoutMode", members: []),
+      jarType(name: "dev.normlanguage.ui.fx.MainAlignment", members: []),
+      jarType(name: "dev.normlanguage.ui.fx.CrossAlignment", members: []),
+      jarType(name: "dev.normlanguage.ui.fx.DockArea", members: []),
+      jarType(name: "dev.normlanguage.ui.fx.DimensionMode", members: [])
+    ]))
 }

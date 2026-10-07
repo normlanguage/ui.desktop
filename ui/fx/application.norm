@@ -10,25 +10,19 @@ import fx.graphics.Stage
 import fx.graphics.Node
 import fx.graphics.Scene
 import fx.graphics.StackPane
-import fx.graphics.Priority
 import fx.graphics.stageNew
 import fx.graphics.stackPaneNew
 import fx.graphics.sceneNew
-import fx.graphics.vBoxNew
-import fx.graphics.hBoxNew
-import fx.graphics.vBoxSetVgrow
 import fx.graphics.platformRunLater
 import fx.graphics.platformIsFxApplicationThread
 import fx.controls.Alert
 import fx.controls.AlertAlertType
-import fx.controls.ScrollPaneScrollBarPolicy
 import fx.controls.alertNew
 import fx.controls.labelNew
 import fx.controls.buttonNew
 import fx.controls.textFieldNew
 import fx.controls.textAreaNew
 import fx.controls.checkBoxNew
-import fx.controls.scrollPaneNew
 
 public class FxApplication {
   private String title
@@ -118,31 +112,10 @@ public class FxApplication {
   public FxNode textArea() { checkFxThread() FxNode(application: this, node: textAreaNew()) }
   public FxNode toggle() { checkFxThread() FxNode(application: this, node: checkBoxNew()) }
   public FxNode adopt(Node node) { checkFxThread() FxNode(application: this, node: node, managed: false) }
-  public FxNode column() {
-    checkFxThread()
-    var pane = vBoxNew(12.0)
-    pane.getStyleClass()!!.add("norm-column")
-    FxNode(application: this, node: pane)
-  }
-  public FxNode row() {
-    checkFxThread()
-    var pane = hBoxNew(10.0)
-    pane.getStyleClass()!!.add("norm-row")
-    FxNode(application: this, node: pane)
-  }
   public FxNode component() {
     checkFxThread()
     var pane = stackPaneNew()
     pane.getStyleClass()!!.add("norm-component")
-    FxNode(application: this, node: pane)
-  }
-  public FxNode scroll() {
-    checkFxThread()
-    var pane = scrollPaneNew()
-    pane.getStyleClass()!!.add("norm-scroll")
-    pane.setFitToWidth(true)
-    pane.setHbarPolicy(ScrollPaneScrollBarPolicy.NEVER)
-    vBoxSetVgrow(arg0: pane, arg1: Priority.ALWAYS)
     FxNode(application: this, node: pane)
   }
 
