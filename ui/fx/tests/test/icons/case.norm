@@ -1,0 +1,44 @@
+package ui.fx.test.icons
+
+import std.testing.Test
+import std.core.Exception
+import ui.fx.FxApplication
+import ui.fx.withFxRuntime
+import fx.graphics.Stage
+
+@Test
+Void installsNormIconsOnARealWindow() {
+  withFxRuntime(() {
+    var application = FxApplication("Norm window icon verification")
+    application.run(build: () { application.later(() {
+      switch application.scene().getWindow() {
+        case Stage window {
+          var icons = window.getIcons()!!
+          require(condition: icons.size() == 5, message: "default window has multiple icon resolutions")
+          var expected = [16.0, 32.0, 48.0, 128.0, 256.0]
+          var index = 0
+          for size : expected {
+            var icon = icons.get(index)!!
+            require(condition: !icon.isError(), message: "bundled icon decodes")
+            require(condition: icon.getWidth() == size && icon.getHeight() == size, message: "bundled icon dimensions")
+            index = index + 1
+          }
+        }
+        case _ { throw Exception(message: "application scene has no stage") }
+      }
+      application.close()
+    }) }, dispose: () {})
+    List<String> sources = ["ui/fx/icons/norm-32.png"]
+    var custom = FxApplication("Custom icon verification", icons: sources)
+    custom.run(build: () { custom.later(() {
+      switch custom.scene().getWindow() {
+        case Stage window {
+          var icons = window.getIcons()!!
+          require(condition: icons.size() == 1 && icons.get(0)!!.getWidth() == 32.0, message: "explicit icons replace the default")
+        }
+        case _ { throw Exception(message: "custom application scene has no stage") }
+      }
+      custom.close()
+    }) }, dispose: () {})
+  })
+}
