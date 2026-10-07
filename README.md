@@ -2,22 +2,33 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Module identity and dependencies: [module.norm](ui/fx/module.norm). Package toolchain: [workflow](.github/workflows/package.yml).
+JavaFX implementation of the [ui protocol](https://github.com/normlanguage/ui). JavaFX native types and the rendering adapter belong to this module.
 
-Build: `norm package ui/fx --output build/repository`.
+## Use
 
-Tests: `norm test ui/fx`.
+Declare the released module in `module.norm`:
 
-Validated on Windows x64 with JVM execution and Native application startup. JavaFX artifacts are resolved from Maven Central; Norm packages are distributed through GitHub Releases.
+```norm
+dependency(repository: "github", name: "ui.fx", version: 6)
+```
 
-[Sample ownership](samples/README.md).
+Use [DesktopApp](ui/fx/desktop.norm) with `ui.Widget` controls. The [foundation application](samples/foundation/application.norm) demonstrates state, theme switching and layouts. Its [module](samples/foundation/module.norm) resolves released packages by default.
 
-Native JavaFX node adoption and application stylesheet configuration are defined in [application.norm](ui/fx/application.norm) and [node.norm](ui/fx/node.norm).
+Native integration uses `ui.fx.native.Node`, `ui.fx.native.Button` and constructors such as `ui.fx.native.buttonNew`. [nativeComponent](ui/fx/native.norm) owns native initialization, updates, children, configuration, theme and disposal. Private layout adapter bindings are not exported. The exact public surface is defined in [module.norm](ui/fx/module.norm).
 
-Rendering adapter: [backend.norm](ui/fx/backend.norm). Desktop entry points: [desktop.norm](ui/fx/desktop.norm). Core contracts: [ui](https://github.com/normlanguage/ui).
+## Build and verify
 
-Layouts: [public protocol implementation](ui/fx/layout.norm), [layout adapter](src/main/java/dev/normlanguage/ui/fx/LayoutPane.java). Theme and configuration projection: [theme.norm](ui/fx/theme.norm). Generic native component integration: [native.norm](ui/fx/native.norm).
+Run `./scripts/prepare.ps1` to build the Java adapter and verify its pinned digest and module. It does not change dependency pins. Run `./scripts/update-pin.ps1` intentionally after changing the adapter. JavaFX dependency versions and reproducible archive settings are owned by [build.gradle.kts](build.gradle.kts).
 
-The [foundation sample](samples/foundation/application.norm) uses `ui`, `ui.theme`, and this backend without a component kit.
+Run `./gradlew.bat test --tests dev.normlanguage.ui.fx.LayoutPaneTest` for layout contracts, `norm test ui/fx` for backend contracts, and `norm test samples/foundation` for the real window flow. The [package workflow](.github/workflows/package.yml) owns release validation. Local development packages may be placed in an isolated Norm home; the sample descriptor remains a released dependency declaration.
 
-Build the Java adapter with `./gradlew.bat publish`, copy `build/repository` into the Norm Maven cache, then package the module. [Package workflow](.github/workflows/package.yml) owns the reproducible CI sequence. Verification: [Java layout contracts](src/test/java/dev/normlanguage/ui/fx/LayoutPaneTest.java), [Norm scene integration](ui/fx/tests/test/layout/case.norm).
+## Sources
+
+- [Layout implementation](ui/fx/layout.norm) and [Java layout adapter](src/main/java/dev/normlanguage/ui/fx/LayoutPane.java)
+- [Theme and configuration projection](ui/fx/theme.norm)
+- [Window lifecycle](ui/fx/application.norm) and [JavaFX runtime](ui/fx/runtime.norm)
+- [Sample ownership](samples/README.md)
+
+## License
+
+[MPL-2.0](LICENSE). The adapter archive carries the license in `META-INF/LICENSE`.

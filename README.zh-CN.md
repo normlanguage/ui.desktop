@@ -2,22 +2,33 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-模块身份和依赖见 [module.norm](ui/fx/module.norm)，发布使用的工具链见[工作流](.github/workflows/package.yml)。
+[ui 协议](https://github.com/normlanguage/ui)的 JavaFX 实现。JavaFX 原生类型与渲染适配器属于同一个模块。
 
-构建：`norm package ui/fx --output build/repository`。
+## 使用
 
-测试：`norm test ui/fx`。
+在 `module.norm` 中声明正式发布的模块：
 
-已在 Windows x64 验证 JVM 执行和 Native 应用启动。JavaFX 制品从 Maven Central 解析；Norm 包通过 GitHub Releases 分发。
+```norm
+dependency(repository: "github", name: "ui.fx", version: 6)
+```
 
-[示例归属](samples/README.zh-CN.md)。
+使用 [DesktopApp](ui/fx/desktop.norm)承载 `ui.Widget`。[基础示例](samples/foundation/application.norm)展示状态、主题切换与布局，其[模块声明](samples/foundation/module.norm)默认解析正式包。
 
-原生 JavaFX 节点接入和应用样式配置入口见 [application.norm](ui/fx/application.norm) 与 [node.norm](ui/fx/node.norm)。
+原生扩展通过 `ui.fx.native.Node`、`ui.fx.native.Button` 和 `ui.fx.native.buttonNew` 等构造函数使用 JavaFX。[nativeComponent](ui/fx/native.norm)统一管理初始化、更新、子节点、配置、主题与释放。内部布局绑定不对外导出。公开 API 以 [module.norm](ui/fx/module.norm)为准。
 
-Rendering adapter: [backend.norm](ui/fx/backend.norm). Desktop entry points: [desktop.norm](ui/fx/desktop.norm). Core contracts: [ui](https://github.com/normlanguage/ui).
+## 构建与验证
 
-布局实现：[协议适配](ui/fx/layout.norm)、[布局节点](src/main/java/dev/normlanguage/ui/fx/LayoutPane.java)。主题与配置投影：[theme.norm](ui/fx/theme.norm)。通用原生控件接入：[native.norm](ui/fx/native.norm)。
+运行 `./scripts/prepare.ps1` 构建 Java 适配器并验证固定摘要与模块，不修改依赖固定值。修改适配器后，明确运行 `./scripts/update-pin.ps1` 更新摘要。JavaFX 版本与可复现归档设置统一由 [build.gradle.kts](build.gradle.kts)管理。
 
-[基础示例](samples/foundation/application.norm)只使用 `ui`、`ui.theme` 与本后端，不依赖组件库。
+布局契约使用 `./gradlew.bat test --tests dev.normlanguage.ui.fx.LayoutPaneTest`；后端契约使用 `norm test ui/fx`；真实窗口流程使用 `norm test samples/foundation`。[发布流程](.github/workflows/package.yml)负责发布验证。本地源码包可放入独立 Norm home，示例声明仍指向正式发布依赖。
 
-先运行 `./gradlew.bat publish`，将 `build/repository` 内容放入 Norm Maven 缓存，再打包模块。完整 CI 步骤以[工作流](.github/workflows/package.yml)为准。验收入口：[Java 布局契约](src/test/java/dev/normlanguage/ui/fx/LayoutPaneTest.java)、[Norm 场景集成](ui/fx/tests/test/layout/case.norm)。
+## 源码索引
+
+- [布局实现](ui/fx/layout.norm)与 [Java 适配器](src/main/java/dev/normlanguage/ui/fx/LayoutPane.java)
+- [主题与配置投影](ui/fx/theme.norm)
+- [窗口生命周期](ui/fx/application.norm)与 [JavaFX 运行时](ui/fx/runtime.norm)
+- [示例职责](samples/README.zh-CN.md)
+
+## 许可证
+
+[MPL-2.0](LICENSE)。适配器归档在 `META-INF/LICENSE` 携带许可证。

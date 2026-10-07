@@ -17,9 +17,9 @@ import ui.Renderer
 import ui.fx.JavaFxBackend
 import ui.fx.JavaFxScheduler
 import ui.fx.FxApplication
-import ui.fx.LayoutPane
+import ui.fx.internal.LayoutPane
 import ui.fx.fxHandle
-import javafx.ScrollPane
+import ui.fx.native.ScrollPane
 
 Void reconcilesPublicLayoutsInARealJavaFxScene() {
   var application = FxApplication("Layout protocol verification")

@@ -17,7 +17,7 @@ import ui.fx.FxNodePeer
 import ui.describeChildren
 import ui.fx.fxHandle
 import ui.fx.FxNode
-import javafx.Node
+import ui.fx.native.Node
 import std.core.Exception
 
 private class ComponentView<T> implements NativeView {

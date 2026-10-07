@@ -3,3 +3,7 @@ dependencies/
 .norm/
 
 .gradle/
+
+.norm-home/
+
+ui/fx/resources/META-INF/licenses/ui.fx/LICENSE
