@@ -2,12 +2,55 @@ package ui.fx.test.lifecycle
 
 import std.core.Exception
 import ui.fx.FxApplication
+import ui.fx.CloseRequest
 import ui.fx.native.buttonNew
 import ui.fx.native.labelNew
 import ui.fx.native.vBoxNew
 import ui.fx.native.hBoxGetHgrow
 
 class Observations { Integer edits = 0 Boolean disposed = false }
+class CloseObservations { List<CloseRequest> requests = [] }
+
+Void resolvesWindowCloseRequestsOnce() {
+  var application = FxApplication("Close confirmation")
+  var state = Observations()
+  var observations = CloseObservations()
+  application.run(build: () {
+    application.interceptClose((request) { observations.requests.add(request) })
+    application.requestClose()
+    application.requestClose()
+    require(condition: observations.requests.size() == 1, message: "pending confirmation ignores repeated close requests")
+    application.later(() {
+      observations.requests[0].cancel()
+      require(condition: !state.disposed, message: "cancel retains the application")
+      application.requestClose()
+      require(condition: observations.requests.size() == 2, message: "cancel permits a fresh confirmation")
+      observations.requests[0].accept()
+      require(condition: !state.disposed, message: "stale confirmation cannot approve a later request")
+      observations.requests[1].accept()
+      observations.requests[1].accept()
+      application.requestClose()
+    })
+  }, dispose: () { state.disposed = true state.edits = state.edits + 1 })
+  require(condition: state.disposed && state.edits == 1, message: "accept disposes exactly once")
+  var direct = FxApplication("Direct close")
+  var directState = Observations()
+  direct.run(build: () {
+    direct.interceptClose((request) { directState.edits = directState.edits + 1 })
+    direct.close()
+  }, dispose: () { directState.disposed = true })
+  require(condition: directState.disposed && directState.edits == 0, message: "programmatic close bypasses confirmation")
+  var pending = FxApplication("Close pending confirmation")
+  var pendingState = Observations()
+  var pendingObservations = CloseObservations()
+  pending.run(build: () {
+    pending.interceptClose((request) { pendingObservations.requests.add(request) })
+    pending.requestClose()
+    pending.close()
+    pendingObservations.requests[0].accept()
+  }, dispose: () { pendingState.edits = pendingState.edits + 1 })
+  require(condition: pendingState.edits == 1, message: "programmatic close invalidates an outstanding confirmation")
+}
 
 Void verifiesJavaFxLifecycleAndControls() {
   var application = FxApplication("Norm JavaFX controls")

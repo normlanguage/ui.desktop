@@ -17,12 +17,13 @@ value DesktopApp<C = Unit> {
   C? config = null
   Double width = 760.0
   Double height = 680.0
+  Function<Void(CloseRequest)>? onCloseRequested = null
 
   Void run() {
     var configuration = this.config
     var container = if configuration == null { Container() } else { startContainer<C>(configuration) }
     try {
-      runApp(title: title, body: (scope) { describe(home) }, container: container, width: width, height: height)
+      runApp(title: title, body: (scope) { describe(home) }, container: container, width: width, height: height, onCloseRequested: onCloseRequested)
     } finally {
       container.close()
     }
@@ -33,10 +34,12 @@ Void runApp<C>(DesktopApp<C> app) {
   app.run()
 }
 
-Void runApp(String title, Function<View(ViewScope)> body, Container? container = null, Double width = 760.0, Double height = 680.0) {
+Void runApp(String title, Function<View(ViewScope)> body, Container? container = null, Double width = 760.0, Double height = 680.0, Function<Void(CloseRequest)>? onCloseRequested = null) {
   var application = FxApplication(title: title, width: width, height: height)
   var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application), container: container)
   application.run(build: () {
+    var guard = onCloseRequested
+    if guard != null { application.interceptClose(guard) }
     renderer.render(View(content: ViewContent.Component(type: "application", body: body)))
     application.root(fxHandle(renderer.node()))
   }, dispose: renderer.close)

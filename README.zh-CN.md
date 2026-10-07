@@ -27,6 +27,7 @@ dependency(repository: "github", name: "ui.fx", version: 6)
 - [布局实现](ui/fx/layout.norm)与 [Java 适配器](src/main/java/dev/normlanguage/ui/fx/LayoutPane.java)
 - [主题与配置投影](ui/fx/theme.norm)
 - [窗口生命周期](ui/fx/application.norm)与 [JavaFX 运行时](ui/fx/runtime.norm)
+- [退出确认](samples/foundation/application.norm)与 [关闭生命周期契约](ui/fx/tests/test/lifecycle/case.norm)
 - [示例职责](samples/README.zh-CN.md)
 
 ## 许可证

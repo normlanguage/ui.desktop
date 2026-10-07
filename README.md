@@ -27,6 +27,7 @@ Run `./gradlew.bat test --tests dev.normlanguage.ui.fx.LayoutPaneTest` for layou
 - [Layout implementation](ui/fx/layout.norm) and [Java layout adapter](src/main/java/dev/normlanguage/ui/fx/LayoutPane.java)
 - [Theme and configuration projection](ui/fx/theme.norm)
 - [Window lifecycle](ui/fx/application.norm) and [JavaFX runtime](ui/fx/runtime.norm)
+- [Close confirmation](samples/foundation/application.norm) and [close lifecycle contracts](ui/fx/tests/test/lifecycle/case.norm)
 - [Sample ownership](samples/README.md)
 
 ## License

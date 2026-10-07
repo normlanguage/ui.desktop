@@ -25,6 +25,23 @@ import ui.fx.native.textFieldNew
 import ui.fx.native.textAreaNew
 import ui.fx.native.checkBoxNew
 
+public class CloseRequest {
+  private Function<Void(Boolean)>? complete
+
+  CloseRequest(Function<Void(Boolean)> complete) { this.complete = complete }
+
+  public Void accept() { this.resolve(true) }
+  public Void cancel() { this.resolve(false) }
+
+  private Void resolve(Boolean approved) {
+    checkFxThread()
+    var callback = complete
+    if callback == null { return }
+    complete = null
+    callback(approved)
+  }
+}
+
 public class FxApplication {
   private String title
   private Double width
@@ -37,7 +54,8 @@ public class FxApplication {
   private Function<Void()>? cleanupAction
   private UiTaskTracker terminations
   private List<Alert> errors
-  private Function<Boolean()>? closeRequested = null
+  private Function<Void(CloseRequest)>? closeRequested = null
+  private CloseRequest? pendingClose = null
   private Boolean closing
   private Boolean started
 
@@ -82,7 +100,7 @@ public class FxApplication {
         window.setScene(scene)
         window.setMinWidth(420.0)
         window.setMinHeight(320.0)
-        window.setOnCloseRequest((event) { event!!.consume() this.requestClose() })
+        window.setOnCloseRequest((event) { event!!.consume() this.dispatch(() { this.requestClose() }) })
         build()
         if !closing { window.show() }
       })
@@ -120,13 +138,20 @@ public class FxApplication {
     FxNode(application: this, node: pane)
   }
 
-  public Void interceptClose(Function<Boolean()> callback) { checkFxThread() closeRequested = callback }
+  public Void interceptClose(Function<Void(CloseRequest)> callback) { checkFxThread() closeRequested = callback }
   public Void hide() { checkFxThread() stage?.hide() }
   public Void show() { checkFxThread() if !closing { stage?.show() stage?.setIconified(false) stage?.toFront() } }
   public Void requestClose() {
     checkFxThread()
+    if closing || pendingClose != null { return }
     var callback = closeRequested
-    if callback == null || callback() { this.close() }
+    if callback == null { this.close() return }
+    var request = CloseRequest((approved) {
+      pendingClose = null
+      if approved && !closing { this.close() }
+    })
+    pendingClose = request
+    callback(request)
   }
   public Void close() { checkFxThread() this.finish(null) }
   public Void later(Function<Void()> action) { platformRunLater(() { this.dispatch(action) }) }
@@ -168,6 +193,9 @@ public class FxApplication {
   private Void finish(Exception? failure) {
     if closing { return }
     closing = true
+    pendingClose?.cancel()
+    pendingClose = null
+    closeRequested = null
     var result = failure
     Boolean cleaned = false
     try {

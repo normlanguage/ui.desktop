@@ -27,9 +27,11 @@ Void opensFoundationAndUpdatesStateAndThemeThroughNativeActions() {
     var backend = ObservedBackend(backend: JavaFxBackend(application))
     var renderer = Renderer(backend: backend, scheduler: JavaFxScheduler(application))
     var checks = Checks()
+    var home = Foundation(theme: themes)
     try {
       application.run(build: () {
-        renderer.render(Foundation(theme: themes))
+        application.interceptClose(home.confirmClose)
+        renderer.render(home)
         var root = fxHandle(renderer.node())
         application.root(root)
         application.later(() {
@@ -61,8 +63,35 @@ Void opensFoundationAndUpdatesStateAndThemeThroughNativeActions() {
                       require(condition: toggle.getText() == "切换浅色", message: "native click switches theme state")
                       require(condition: toggle.getStyle() != initialStyle, message: "theme change projects new native palette")
                       require(condition: retainedTheme.nativeNode() == toggle && backend.nodes.size() == initialCount, message: "theme change retains native control")
-                      checks.completed = true
-                      application.close()
+                      application.requestClose()
+                      application.later(() {
+                        FxNode? cancelPeer = null
+                        for peer : backend.nodes {
+                          if peer.nativeNode().getId() == "close-cancel" { cancelPeer = peer }
+                        }
+                        switch cancelPeer!!.nativeNode() {
+                          case Button cancel {
+                            cancel.fire()
+                            application.later(() {
+                              require(condition: !checks.disposed, message: "cancel keeps real window and renderer alive")
+                              application.requestClose()
+                              application.later(() {
+                                FxNode? acceptPeer = null
+                                for peer : backend.nodes {
+                                  if peer.nativeNode().getId() == "close-accept" { acceptPeer = peer }
+                                }
+                                switch acceptPeer!!.nativeNode() {
+                                  case Button accept { checks.completed = true accept.fire() }
+                                  case _ { require(condition: false, message: "accept action resolves to JavaFX Button") }
+                                }
+                                return
+                              })
+                            })
+                          }
+                          case _ { require(condition: false, message: "cancel action resolves to JavaFX Button") }
+                        }
+                        return
+                      })
                     })
                   }
                   case _ { require(condition: false, message: "theme action resolves to JavaFX Button") }
