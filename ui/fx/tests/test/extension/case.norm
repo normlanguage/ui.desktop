@@ -1,5 +1,14 @@
 package ui.fx.test.extension
 
+import ui.Widget
+import std.context.currentContext
+import ui.State
+import ui.ForEach
+import ui.ValueKey
+import ui.text
+import ui.fx.nativeComponent
+import ui.fx.native.StackPane
+import ui.fx.native.stackPaneNew
 import ui.row
 
 import std.core.Exception
@@ -22,7 +31,7 @@ class NativeLabel implements NativeView {
   String value
   LabelRecords records
   String kind() { "native-label" }
-  List<View> children() { [] }
+  List<View> children(RenderNode node) { [] }
   RenderNode create(RenderBackend backend, ViewScope scope) {
     return switch backend {
       case JavaFxBackend fx {
@@ -78,4 +87,53 @@ Void mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow() {
     application.close()
   }, dispose: renderer.close)
   require(condition: records.nodes[0].closed, message: "renderer releases adopted wrapper")
+}
+
+
+class DynamicRows {
+  StackPane pane
+  State<List<String>> visible
+}
+
+class RowLifecycle { Integer initialized = 0 Integer disposed = 0 }
+
+class DynamicRow implements Widget {
+  String title
+  RowLifecycle lifetime
+  Void init() { lifetime.initialized = lifetime.initialized + 1 }
+  Widget build() { text(title) }
+  Void dispose() { lifetime.disposed = lifetime.disposed + 1 }
+}
+
+Widget dynamicRows(List<String> rows, RowLifecycle lifetime) {
+  nativeComponent<DynamicRows>(kind: "test.dynamic-rows",
+    create: () { DynamicRows(pane: stackPaneNew(), visible: currentContext<ViewScope>()!!.createState<List<String>>(rows)) }, node: (host) { host.pane },
+    update: (host, scope) {
+      host.visible.value = rows
+    }, childrenBuilder: (host) {
+      ForEach<String>(items: host.visible.value,
+        identity: (String item) { ValueKey<String>(item) },
+        child: (String item) { DynamicRow(title: item, lifetime: lifetime) }).widgets()
+    }, arrange: (host, nodes) {
+      var children = host.pane.getChildren()!!
+      children.clear()
+      for node : nodes { children.add(node) }
+    }, close: (host) { host.pane.getChildren()!!.clear() })
+}
+
+Void reconcilesVisibleNativeChildrenWithTheirOwningScope() {
+  var application = FxApplication("Dynamic native children")
+  var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application))
+  var lifetime = RowLifecycle()
+  application.run(build: () {
+    renderer.render(dynamicRows(rows: ["a", "b"], lifetime: lifetime))
+    application.root(fxHandle(renderer.node()))
+    require(condition: lifetime.initialized == 2, message: "only visible rows initialize: " + lifetime.initialized.toString())
+    renderer.render(dynamicRows(rows: ["b", "a"], lifetime: lifetime))
+    require(condition: lifetime.initialized == 2 && lifetime.disposed == 0, message: "stable identities preserve row scopes on reorder")
+    renderer.render(dynamicRows(rows: ["b", "c"], lifetime: lifetime))
+    require(condition: lifetime.initialized == 3 && lifetime.disposed == 1, message: "leaving the visible window disposes the removed row")
+    application.close()
+  }, dispose: renderer.close)
+  require(condition: lifetime.disposed == 3, message: "unmount disposes the remaining visible rows")
 }

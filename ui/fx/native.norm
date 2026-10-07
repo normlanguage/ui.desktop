@@ -24,21 +24,29 @@ private class ComponentView<T> implements NativeView {
   String identity
   List<Widget> content
   Function<T()> initialize
-  Function<Node(T)> node
+  Function<Node(T)> projectNode
   Function<Void(T, ViewScope)> apply
   Function<Void(T, List<Node>)>? arrange
+  Function<List<Widget>(T)>? childrenBuilder
   Function<Void(T, UiConfiguration)>? applyConfiguration
   Function<Void(T, Theme?)>? applyTheme
   Function<Void(T)> release
 
   String kind() { identity }
-  List<View> children() { describeChildren(content) }
+  List<View> children(RenderNode node) {
+    var buildChildren = childrenBuilder
+    if buildChildren == null { return describeChildren(content) }
+    switch node {
+      case ComponentNode<T> current { break describeChildren(buildChildren(current.control)) }
+      case _ { throw Exception(message: "native component node type changed") }
+    }
+  }
   RenderNode create(RenderBackend backend, ViewScope scope) {
     switch backend {
       case JavaFxBackend fx {
         var control = scope.within<T>(initialize)
         try {
-          var peer = fx.fxApplication().adopt(node(control))
+          var peer = fx.fxApplication().adopt(projectNode(control))
           break ComponentNode<T>(control: control, peer: peer, scope: scope, specification: this)
         } catch Exception failure { release(control) throw failure }
       }
@@ -98,7 +106,8 @@ private class ComponentNode<T> implements FxNodePeer, ThemedRenderNode, Configur
 View nativeComponent<T>(String kind, Function<T()> create, Function<Node(T)> node,
     Function<Void(T, ViewScope)> update, Function<Void(T)> close,
     List<Widget> children = [], Function<Void(T, List<Node>)>? arrange = null,
+    Function<List<Widget>(T)>? childrenBuilder = null,
     NodeKey? key = null, Boolean enabled = true, Function<Void(T, Theme?)>? applyTheme = null, Function<Void(T, UiConfiguration)>? applyConfiguration = null) {
   View(key: key, enabled: enabled, content: ViewContent.Native(ComponentView<T>(identity: kind,
-    content: children, initialize: create, node: node, apply: update, arrange: arrange, release: close, applyTheme: applyTheme, applyConfiguration: applyConfiguration)))
+    content: children, childrenBuilder: childrenBuilder, initialize: create, projectNode: node, apply: update, arrange: arrange, release: close, applyTheme: applyTheme, applyConfiguration: applyConfiguration)))
 }
