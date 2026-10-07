@@ -21,7 +21,7 @@ jobs:
           lfs: true
       - uses: normlanguage/registry/.github/actions/setup-norm@d229852448570c786a3f86e62c7db36769ed9a18
         with:
-          source-ref: 9dd8571427f77e7fa9b9adab38ac1272f7d82d2a
+          source-ref: 73c85f207aec21a1f3a12c2e4943d1af54b64449
       - uses: actions/setup-java@v4
         with:
           distribution: oracle
@@ -34,64 +34,25 @@ jobs:
           $cache = Join-Path $HOME '.norm/cache/maven'
           New-Item -ItemType Directory -Force $cache | Out-Null
           Copy-Item -Path build/repository/* -Destination $cache -Recurse -Force
-      - name: Locate Module
-        id: module
-        shell: bash
-        run: |
-          mapfile -d '' modules < <(find . -type f -name module.norm -not -path './.git/*' -not -path './.tmp/*' -not -path './.norm/*' -not -path './examples/*' -not -path './sample/*' -not -path './samples/*' -print0)
-          [[ "${#modules[@]}" == 1 ]]
-          echo "path=${modules[0]}" >> "$GITHUB_OUTPUT"
-      - name: Package
-        shell: bash
-        run: |
-          norm package "${{ steps.module.outputs.path }}" --output build/repository
-          git diff --exit-code -- "${{ steps.module.outputs.path }}"
-          mkdir -p "$HOME/.norm/cache/packages/github"
-          cp -R build/repository/. "$HOME/.norm/cache/packages/github/"
+      - uses: normlanguage/registry/.github/actions/package-module@1c5b2948a0c788f1aa21542255eb1a445027ab29
+        id: package
+        with:
+          module-path: ui/fx
+          cache-directory: ~/.norm/cache/packages/github
       - name: Verify module tests
         shell: bash
         run: |
-          module_dir="$(dirname "${{ steps.module.outputs.path }}")"
+          module_dir="ui/fx"
           if [[ -d "$module_dir/tests" ]]; then
             timeout 300 norm test "$module_dir"
           fi
       - name: Verify foundation window
         shell: bash
         run: timeout 300 norm test samples/foundation --filter samples.foundation.test.flow
-      - name: Verify examples
+      - name: Check minimal example
         shell: bash
-        run: |
-          while IFS= read -r -d '' entry; do
-            timeout 300 norm "$entry"
-          done < <(find . -type f -name Main.norm -not -path './.git/*' -not -path './.tmp/*' -not -path './.norm/*' -not -path './build/*' -not -path './samples/*' -print0)
-      - name: Select release artifact
-        id: artifact
-        shell: bash
-        run: |
-          mapfile -t archives < <(find build/repository -type f -name '*.nar')
-          [[ "${#archives[@]}" == 1 ]]
-          archive="${archives[0]}"
-          version="${archive%.nar}"
-          version="${version##*-}"
-          echo "archive=$archive" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-      - uses: actions/attest-build-provenance@v3
-        if: startsWith(github.ref, 'refs/tags/')
+        run: norm check samples/hello.norm
+      - uses: normlanguage/registry/.github/actions/publish-module@1c5b2948a0c788f1aa21542255eb1a445027ab29
         with:
-          subject-path: ${{ steps.artifact.outputs.archive }}
-      - name: Publish immutable release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ARCHIVE: ${{ steps.artifact.outputs.archive }}
-          VERSION: ${{ steps.artifact.outputs.version }}
-        shell: bash
-        run: |
-          [[ "$GITHUB_REF_NAME" == "v$VERSION" ]]
-          state="$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft 2>/dev/null || echo missing)"
-          [[ "$state" != "false" ]]
-          if [[ "$state" == "missing" ]]; then
-            gh release create "$GITHUB_REF_NAME" --verify-tag --draft --title "$GITHUB_REF_NAME" --generate-notes
-          fi
-          gh release upload "$GITHUB_REF_NAME" "$ARCHIVE" "$ARCHIVE.sha256" --clobber
-          gh release edit "$GITHUB_REF_NAME" --draft=false --latest=false
+          archive: ${{ steps.package.outputs.archive }}
+          version: ${{ steps.package.outputs.version }}
