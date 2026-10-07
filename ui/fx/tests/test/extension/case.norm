@@ -8,6 +8,8 @@ import ui.ValueKey
 import ui.text
 import ui.fx.nativeComponent
 import ui.fx.native.StackPane
+import ui.fx.native.Button
+import ui.fx.native.buttonNew
 import ui.fx.native.stackPaneNew
 import ui.row
 
@@ -70,6 +72,20 @@ class MountedLabel implements FxNodePeer {
 class LabelRecords { List<MountedLabel> nodes = [] }
 
 Void mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow() {
+  var componentApplication = FxApplication("Native component identity")
+  var componentRenderer = Renderer(backend: JavaFxBackend(componentApplication), scheduler: JavaFxScheduler(componentApplication))
+  componentApplication.run(build: () {
+    componentRenderer.render(nativeComponent<Button>(kind: "test.native-action", key: NodeKey.Named("native-action"),
+      create: buttonNew, node: (control) { control }, update: (control, scope) { control.setText("Native action") },
+      close: (control) { control.setOnAction(null) }))
+    componentApplication.root(fxHandle(componentRenderer.node()))
+    var native = fxHandle(componentRenderer.node()).nativeNode()
+    require(condition: native.getId() == "native-action", message: "native component projects its named key to the node identity")
+    componentApplication.later(() {
+      require(condition: componentApplication.scene().lookup("#native-action") == native, message: "public scene lookup resolves native component keys")
+      componentApplication.close()
+    })
+  }, dispose: componentRenderer.close)
   var application = FxApplication("Native extension verification")
   var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application))
   var records = LabelRecords()

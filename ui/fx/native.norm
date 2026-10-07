@@ -79,6 +79,7 @@ private class ComponentNode<T> implements FxNodePeer, ThemedRenderNode, Configur
     switch view.content {
       case Native(ComponentView<T> next) {
         specification = next
+        peer.appearance(view)
         peer.enabled(view.enabled)
         next.apply(control, scope)
         var applyConfiguration = next.applyConfiguration

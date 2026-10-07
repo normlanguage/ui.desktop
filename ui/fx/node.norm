@@ -2,6 +2,7 @@ package ui.fx
 
 import std.core.Exception
 import std.io.Resource
+import ui.View
 import ui.fx.native.Observable
 import ui.fx.native.fxCollectionsSort
 import ui.fx.native.Node
@@ -152,8 +153,21 @@ public class FxNode implements Resource {
   public Void onAction(Function<Void()> callback) { this.checkOpen() action = callback }
   public Void onText(Function<Void(String)> callback) { this.checkOpen() edit = callback }
   public Void onToggle(Function<Void(Boolean)> callback) { this.checkOpen() toggle = callback }
-  public Void appearance(String role, String key) {
+  public Void appearance(View view) {
     this.checkOpen()
+    String role = switch view.role {
+      case Default { break "default" }
+      case Title { break "title" }
+      case Muted { break "muted" }
+      case Primary { break "primary" }
+      case Destructive { break "destructive" }
+      case Card { break "card" }
+    }
+    String key = switch view.key {
+      case Named(String value) { break value }
+      case Id(Integer value) { break value.toString() }
+      case _ { break "" }
+    }
     peer.setId(key)
     var next = "norm-" + role
     if roleClass != next {

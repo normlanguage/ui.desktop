@@ -87,20 +87,7 @@ class FxRenderNode implements TextFieldRenderNode, FxNodePeer, ThemedRenderNode,
     if currentTheme != null && themeRole != view.role { peer.nativeNode().setStyle(fxThemeStyle(snapshot: currentTheme, role: view.role) + fxConfigurationStyle(settings)) }
     themeRole = view.role
     peer.enabled(view.enabled)
-    String role = switch view.role {
-      case Default { break "default" }
-      case Title { break "title" }
-      case Muted { break "muted" }
-      case Primary { break "primary" }
-      case Destructive { break "destructive" }
-      case Card { break "card" }
-    }
-    String identity = switch view.key {
-      case Named(String value) { break value }
-      case Id(Integer value) { break value.toString() }
-      case _ { break "" }
-    }
-    peer.appearance(role: role, key: identity)
+    peer.appearance(view)
     switch view.content {
       case Text(String text) { peer.text(text) }
       case Button(String text, Function<Void()> action) {

@@ -70,12 +70,7 @@ class FxLayoutRenderNode implements FxNodePeer, ThemedRenderNode, ConfiguredRend
   Void update(View view) {
     peer.enabled(view.enabled)
     role = view.role
-    String identity = switch view.key {
-      case Named(String value) { break value }
-      case Id(Integer value) { break value.toString() }
-      case _ { break "" }
-    }
-    peer.appearance(role: "layout", key: identity)
+    peer.appearance(view)
     switch view.content {
       case Native(NativeView descriptor) {
         switch descriptor {
