@@ -1,0 +1,155 @@
+package ui.desktop.test.extension
+
+import ui.Widget
+import std.context.currentContext
+import ui.State
+import ui.ForEach
+import ui.ValueKey
+import ui.text
+import ui.desktop.nativeComponent
+import ui.desktop.native.StackPane
+import ui.desktop.native.Button
+import ui.desktop.native.buttonNew
+import ui.desktop.native.stackPaneNew
+import ui.row
+
+import std.core.Exception
+import ui.NodeKey
+import ui.View
+import ui.ViewContent
+import ui.NativeView
+import ui.ViewScope
+import ui.RenderBackend
+import ui.RenderNode
+import ui.Renderer
+import ui.desktop.JavaFxBackend
+import ui.desktop.JavaFxScheduler
+import ui.desktop.FxNodePeer
+import ui.desktop.FxNode
+import ui.desktop.FxApplication
+import ui.desktop.fxHandle
+
+class NativeLabel implements NativeView {
+  String value
+  LabelRecords records
+  String kind() { "native-label" }
+  List<View> children(RenderNode node) { [] }
+  RenderNode create(RenderBackend backend, ViewScope scope) {
+    return switch backend {
+      case JavaFxBackend fx {
+        var source = fx.fxApplication().text()
+        var mounted = MountedLabel(peer: fx.fxApplication().adopt(source.nativeNode()), closed: false)
+        source.close()
+        records.nodes.add(mounted)
+        break mounted
+      }
+      case _ { throw Exception(message: "native label requires JavaFX") }
+    }
+  }
+}
+
+class MountedLabel implements FxNodePeer {
+  FxNode peer
+  Boolean closed
+  FxNode fxNode() { peer }
+  Void update(View view) {
+    switch view.content {
+      case Native(NativeView descriptor) {
+        switch descriptor {
+          case NativeLabel current { peer.text(current.value) }
+          case _ {}
+        }
+      }
+      case _ {}
+    }
+  }
+  Void children(List<RenderNode> children) {
+    require(condition: children.size() == 0, message: "native label is a leaf")
+  }
+  Void close() { closed = true peer.close() }
+}
+
+class LabelRecords { List<MountedLabel> nodes = [] }
+
+Void mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow() {
+  var componentApplication = FxApplication("Native component identity")
+  var componentRenderer = Renderer(backend: JavaFxBackend(componentApplication), scheduler: JavaFxScheduler(componentApplication))
+  componentApplication.run(build: () {
+    componentRenderer.render(nativeComponent<Button>(kind: "test.native-action", key: NodeKey.Named("native-action"),
+      create: buttonNew, node: (control) { control }, update: (control, scope) { control.setText("Native action") },
+      close: (control) { control.setOnAction(null) }))
+    componentApplication.root(fxHandle(componentRenderer.node()))
+    var native = fxHandle(componentRenderer.node()).nativeNode()
+    require(condition: native.getId() == "native-action", message: "native component projects its named key to the node identity")
+    componentApplication.later(() {
+      require(condition: componentApplication.scene().lookup("#native-action") == native, message: "public scene lookup resolves native component keys")
+      componentApplication.close()
+    })
+  }, dispose: componentRenderer.close)
+  var application = FxApplication("Native extension verification")
+  var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application))
+  var records = LabelRecords()
+  application.run(build: () {
+    renderer.render(View(content: row([
+      View(key: NodeKey.Named("custom"), content: ViewContent.Native(NativeLabel(value: "初始", records: records))),
+      View(key: NodeKey.Named("builtin"), content: ViewContent.Button(text: "动作", action: () {}))
+    ]).content))
+    application.root(fxHandle(renderer.node()))
+    renderer.render(View(content: row([
+      View(key: NodeKey.Named("builtin"), content: ViewContent.Button(text: "动作", action: () {})),
+      View(key: NodeKey.Named("custom"), content: ViewContent.Native(NativeLabel(value: "更新", records: records)))
+    ]).content))
+    require(condition: records.nodes.size() == 1, message: "reorder preserves adopted node beside built-in node")
+    application.close()
+  }, dispose: renderer.close)
+  require(condition: records.nodes[0].closed, message: "renderer releases adopted wrapper")
+}
+
+
+class DynamicRows {
+  StackPane pane
+  State<List<String>> visible
+}
+
+class RowLifecycle { Integer initialized = 0 Integer disposed = 0 }
+
+class DynamicRow implements Widget {
+  String title
+  RowLifecycle lifetime
+  Void init() { lifetime.initialized = lifetime.initialized + 1 }
+  Widget build() { text(title) }
+  Void dispose() { lifetime.disposed = lifetime.disposed + 1 }
+}
+
+Widget dynamicRows(List<String> rows, RowLifecycle lifetime) {
+  nativeComponent<DynamicRows>(kind: "test.dynamic-rows",
+    create: () { DynamicRows(pane: stackPaneNew(), visible: currentContext<ViewScope>()!!.createState<List<String>>(rows)) }, node: (host) { host.pane },
+    update: (host, scope) {
+      host.visible.value = rows
+    }, childrenBuilder: (host) {
+      ForEach<String>(items: host.visible.value,
+        identity: (String item) { ValueKey<String>(item) },
+        child: (String item) { DynamicRow(title: item, lifetime: lifetime) }).widgets()
+    }, arrange: (host, nodes) {
+      var children = host.pane.getChildren()!!
+      children.clear()
+      for node : nodes { children.add(node) }
+    }, close: (host) { host.pane.getChildren()!!.clear() })
+}
+
+Void reconcilesVisibleNativeChildrenWithTheirOwningScope() {
+  var application = FxApplication("Dynamic native children")
+  var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application))
+  var lifetime = RowLifecycle()
+  application.run(build: () {
+    renderer.render(dynamicRows(rows: ["a", "b"], lifetime: lifetime))
+    application.root(fxHandle(renderer.node()))
+    require(condition: lifetime.initialized == 2, message: "only visible rows initialize: " + lifetime.initialized.toString())
+    renderer.render(dynamicRows(rows: ["b", "a"], lifetime: lifetime))
+    require(condition: lifetime.initialized == 2 && lifetime.disposed == 0, message: "stable identities preserve row scopes on reorder")
+    renderer.render(dynamicRows(rows: ["b", "c"], lifetime: lifetime))
+    require(condition: lifetime.initialized == 3 && lifetime.disposed == 1, message: "leaving the visible window disposes the removed row")
+    application.close()
+  }, dispose: renderer.close)
+  require(condition: lifetime.disposed == 3, message: "unmount disposes the remaining visible rows")
+}

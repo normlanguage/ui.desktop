@@ -6,4 +6,5 @@ dependencies/
 
 .norm-home/
 
-ui/fx/resources/META-INF/licenses/ui.fx/LICENSE
+ui/desktop/resources/META-INF/licenses/ui.desktop/LICENSE
+.tmp/

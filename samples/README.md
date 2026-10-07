@@ -4,4 +4,4 @@
 
 [hello.norm](hello.norm) is the minimal desktop counter. Run `norm run samples/hello.norm`.
 
-[Component library](https://github.com/normlanguage/ui.fx.kit)
+[Component library](https://github.com/normlanguage/ui.desktop.kit)

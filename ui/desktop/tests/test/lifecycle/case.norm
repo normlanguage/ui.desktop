@@ -1,0 +1,171 @@
+package ui.desktop.test.lifecycle
+
+import std.core.Exception
+import ui.desktop.FxApplication
+import ui.desktop.CloseRequest
+import ui.desktop.native.buttonNew
+import ui.desktop.native.labelNew
+import ui.desktop.native.vBoxNew
+import ui.desktop.native.hBoxGetHgrow
+
+class Observations { Integer edits = 0 Boolean disposed = false }
+class CloseObservations { List<CloseRequest> requests = [] }
+
+Void resolvesWindowCloseRequestsOnce() {
+  var application = FxApplication("Close confirmation")
+  var state = Observations()
+  var observations = CloseObservations()
+  application.run(build: () {
+    application.interceptClose((request) { observations.requests.add(request) })
+    application.requestClose()
+    application.requestClose()
+    require(condition: observations.requests.size() == 1, message: "pending confirmation ignores repeated close requests")
+    application.later(() {
+      observations.requests[0].cancel()
+      require(condition: !state.disposed, message: "cancel retains the application")
+      application.requestClose()
+      require(condition: observations.requests.size() == 2, message: "cancel permits a fresh confirmation")
+      observations.requests[0].accept()
+      require(condition: !state.disposed, message: "stale confirmation cannot approve a later request")
+      observations.requests[1].accept()
+      observations.requests[1].accept()
+      application.requestClose()
+    })
+  }, dispose: () { state.disposed = true state.edits = state.edits + 1 })
+  require(condition: state.disposed && state.edits == 1, message: "accept disposes exactly once")
+  var direct = FxApplication("Direct close")
+  var directState = Observations()
+  direct.run(build: () {
+    direct.interceptClose((request) { directState.edits = directState.edits + 1 })
+    direct.close()
+  }, dispose: () { directState.disposed = true })
+  require(condition: directState.disposed && directState.edits == 0, message: "programmatic close bypasses confirmation")
+  var pending = FxApplication("Close pending confirmation")
+  var pendingState = Observations()
+  var pendingObservations = CloseObservations()
+  pending.run(build: () {
+    pending.interceptClose((request) { pendingObservations.requests.add(request) })
+    pending.requestClose()
+    pending.close()
+    pendingObservations.requests[0].accept()
+  }, dispose: () { pendingState.edits = pendingState.edits + 1 })
+  require(condition: pendingState.edits == 1, message: "programmatic close invalidates an outstanding confirmation")
+}
+
+Void verifiesJavaFxLifecycleAndControls() {
+  var application = FxApplication("Norm JavaFX controls")
+  var state = Observations()
+  application.run(build: () {
+    var input = application.input()
+    require(condition: hBoxGetHgrow(input.nativeNode()) == null, message: "core controls do not impose native HBox growth")
+    input.onText((text) { state.edits = state.edits + 1 })
+    input.text("中文")
+    if state.edits != 0 { throw Exception(message: "model update must not emit edit") }
+    if input.readText() != "中文" { throw Exception(message: "input value") }
+    input.clear()
+    if state.edits == 0 { throw Exception(message: "native edit must emit event") }
+    var column = application.component()
+    var first = application.text()
+    first.text("first")
+    var second = application.button()
+    second.text("second")
+    column.children([first, second, input])
+    application.root(column)
+    column.children([input, second, first])
+    application.later(() { application.close() })
+  }, dispose: () { state.disposed = true })
+  require(condition: state.disposed, message: "application disposes before returning")
+  var failed = FxApplication("Norm JavaFX failure")
+  var failure = Exception(message: "event failure")
+  try {
+    failed.run(build: () { throw failure }, dispose: () {})
+    throw Exception(message: "callback failure was lost")
+  } catch Exception error { require(condition: error == failure, message: "failure identity") }
+  var cleanupFailure = FxApplication("Norm JavaFX cleanup failure")
+  var cleanupError = Exception(message: "cleanup failure")
+  try {
+    cleanupFailure.run(build: () { cleanupFailure.close() }, dispose: () { throw cleanupError })
+    throw Exception(message: "cleanup failure was lost")
+  } catch Exception error { require(condition: error == cleanupError, message: "cleanup failure identity") }
+  var closesAfterFailure = FxApplication("Failure before close")
+  var callbackFailure = Exception(message: "failure before finally close")
+  var callbackState = Observations()
+  try {
+    closesAfterFailure.run(build: () {
+      closesAfterFailure.later(() {
+        try { throw callbackFailure }
+        finally { closesAfterFailure.close() }
+      })
+    }, dispose: () { callbackState.edits = callbackState.edits + 1 throw Exception(message: "secondary cleanup failure") })
+    throw Exception(message: "finally close swallowed the callback failure")
+  } catch Exception error { require(condition: error == callbackFailure, message: "callback failure wins over close requested in finally") }
+  require(condition: callbackState.edits == 1, message: "failed callback disposes once")
+  var nested = FxApplication("Nested callback failure")
+  var nestedState = Observations()
+  try {
+    nested.run(build: () {
+      var node = nested.text()
+      nested.later(() {
+        node.dispatch(() {
+          try { throw callbackFailure }
+          finally { nested.close() }
+        })
+        require(condition: !nestedState.disposed, message: "nested close waits for the outer callback to exit")
+      })
+    }, dispose: () { nestedState.disposed = true nestedState.edits = nestedState.edits + 1 })
+    throw Exception(message: "nested callback failure was lost")
+  } catch Exception error { require(condition: error == callbackFailure, message: "nested callback preserves the first failure") }
+  require(condition: nestedState.edits == 1, message: "nested callback disposes once")
+  var closesAfterAbort = FxApplication("Abort before close")
+  try {
+    closesAfterAbort.run(build: () {
+      closesAfterAbort.later(() {
+        try { require(condition: false, message: "fatal before close") }
+        finally { closesAfterAbort.close() }
+      })
+    }, dispose: () {})
+    throw Exception(message: "finally close swallowed the callback abort")
+  } catch Exception error { require(condition: error.message == "GUI callback aborted", message: "callback abort wins over finally close") }
+  var aborted = FxApplication("Norm JavaFX abort")
+  try {
+    aborted.run(build: () { require(condition: false, message: "fatal callback") }, dispose: () {})
+    throw Exception(message: "aborted callback was lost")
+  } catch Exception error { require(condition: error.message == "GUI callback aborted", message: "aborted callback releases waiter") }
+  var borrowedApp = FxApplication("Borrowed controls")
+  var observations = Observations()
+  borrowedApp.run(build: () {
+    var button = buttonNew()
+    button.setOnAction((event) { observations.edits = observations.edits + 1 })
+    var pane = vBoxNew(8.0)
+    pane.getChildren()!!.add(button)
+    var wrapped = borrowedApp.adopt(pane)
+    var wrappedButton = borrowedApp.adopt(button)
+    require(condition: wrapped.nativeNode() == pane, message: "adoption preserves native identity")
+    require(condition: wrappedButton.nativeNode() == button, message: "control adoption preserves native identity")
+    var column = borrowedApp.component()
+    column.children([wrapped, borrowedApp.text()])
+    borrowedApp.root(column)
+    require(condition: borrowedApp.scene().getStylesheets()!!.size() == 0, message: "no implicit theme stylesheet")
+    wrapped.dispatch(() { observations.edits = observations.edits + 1 })
+    require(condition: observations.edits == 1, message: "native event enters application boundary")
+    wrapped.close()
+    wrapped.close()
+    wrappedButton.close()
+    wrappedButton.close()
+    wrapped.dispatch(() { observations.edits = observations.edits + 1 })
+    require(condition: observations.edits == 1, message: "closed wrapper ignores late events")
+    require(condition: pane.getChildren()!!.size() == 1, message: "borrowed pane keeps its children")
+    button.fire()
+    require(condition: observations.edits == 2, message: "borrowed button retains its own action")
+    borrowedApp.later(() { borrowedApp.close() })
+  }, dispose: () {})
+  var stylesheet = "data:text/css,.root%7B-fx-background-color:%23abcdef;%7D"
+  var styledApp = FxApplication("Configured styles", stylesheet)
+  styledApp.run(build: () {
+    var native = labelNew()
+    var wrapped = styledApp.adopt(native)
+    styledApp.root(wrapped)
+    require(condition: styledApp.scene().getStylesheets()!!.contains(stylesheet), message: "caller stylesheet reaches scene")
+    styledApp.later(() { styledApp.close() })
+  }, dispose: () {})
+}

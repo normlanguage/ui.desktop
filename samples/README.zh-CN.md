@@ -4,4 +4,4 @@
 
 [hello.norm](hello.norm)是最小桌面计数器，运行 `norm run samples/hello.norm`。
 
-[组件库](https://github.com/normlanguage/ui.fx.kit)
+[组件库](https://github.com/normlanguage/ui.desktop.kit)
