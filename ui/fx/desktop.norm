@@ -38,9 +38,11 @@ Void runApp(String title, Function<View(ViewScope)> body, Container? container =
   var application = FxApplication(title: title, width: width, height: height)
   var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application), container: container)
   application.run(build: () {
-    var guard = onCloseRequested
-    if guard != null { application.interceptClose(guard) }
-    renderer.render(View(content: ViewContent.Component(type: "application", body: body)))
+    renderer.render(View(content: ViewContent.Component(type: "application", body: (scope) {
+      var guard = onCloseRequested
+      if guard != null { application.interceptClose((request) { scope.execute(() { guard(request) }) }) }
+      body(scope)
+    })))
     application.root(fxHandle(renderer.node()))
   }, dispose: renderer.close)
 }
