@@ -4,25 +4,26 @@ import std.core.Exception
 import std.core.Unit
 import std.concurrent.Completion
 import std.concurrent.Task
+import ui.UiTaskTracker
 import std.concurrent.completion
 import std.context.currentContext
-import javafx.Stage
-import javafx.Node
-import javafx.Scene
-import javafx.StackPane
-import javafx.stageNew
-import javafx.stackPaneNew
-import javafx.sceneNew
-import javafx.platformRunLater
-import javafx.platformIsFxApplicationThread
-import javafx.Alert
-import javafx.AlertAlertType
-import javafx.alertNew
-import javafx.labelNew
-import javafx.buttonNew
-import javafx.textFieldNew
-import javafx.textAreaNew
-import javafx.checkBoxNew
+import ui.fx.native.Stage
+import ui.fx.native.Node
+import ui.fx.native.Scene
+import ui.fx.native.StackPane
+import ui.fx.native.stageNew
+import ui.fx.native.stackPaneNew
+import ui.fx.native.sceneNew
+import ui.fx.native.platformRunLater
+import ui.fx.native.platformIsFxApplicationThread
+import ui.fx.native.Alert
+import ui.fx.native.AlertAlertType
+import ui.fx.native.alertNew
+import ui.fx.native.labelNew
+import ui.fx.native.buttonNew
+import ui.fx.native.textFieldNew
+import ui.fx.native.textAreaNew
+import ui.fx.native.checkBoxNew
 
 public class FxApplication {
   private String title
@@ -34,7 +35,7 @@ public class FxApplication {
   private Scene? activeScene
   private StackPane? container
   private Function<Void()>? cleanupAction
-  private List<Task<Unit>> terminations
+  private UiTaskTracker terminations
   private List<Alert> errors
   private Function<Boolean()>? closeRequested = null
   private Boolean closing
@@ -51,7 +52,7 @@ public class FxApplication {
     activeScene = null
     container = null
     cleanupAction = null
-    terminations = List<>()
+    terminations = UiTaskTracker(dispatch: (action) { platformRunLater(action) })
     errors = List<>()
     closing = false
     started = false
@@ -87,8 +88,8 @@ public class FxApplication {
       })
       task.await()
     } finally {
-      for termination : terminations { termination.await() }
-      finished.close()
+      try { terminations.await() }
+      finally { terminations.close() finished.close() }
     }
   }
 
@@ -133,10 +134,7 @@ public class FxApplication {
   public Void trackTermination(Task<Unit> termination) {
     checkFxThread()
     if closing { throw Exception(message: "GUI application is closed") }
-    List<Task<Unit>> pending = List<>()
-    for task : terminations { if !task.completed() { pending.add(task) } }
-    pending.add(termination)
-    terminations = pending
+    terminations.track(termination)
   }
 
   public Void reportFailure(String message) {

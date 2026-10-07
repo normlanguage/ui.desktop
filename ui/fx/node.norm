@@ -2,18 +2,16 @@ package ui.fx
 
 import std.core.Exception
 import std.io.Resource
-import javafx.Observable
-import javafx.fxCollectionsSort
-import javafx.Node
-import javafx.Pane
-import javafx.Priority
-import javafx.hBoxSetHgrow
-import javafx.Button
-import javafx.TextField
-import javafx.TextArea
-import javafx.CheckBox
-import javafx.Labeled
-import javafx.ScrollPane
+import ui.fx.native.Observable
+import ui.fx.native.fxCollectionsSort
+import ui.fx.native.Node
+import ui.fx.native.Pane
+import ui.fx.native.Button
+import ui.fx.native.TextField
+import ui.fx.native.TextArea
+import ui.fx.native.CheckBox
+import ui.fx.native.Labeled
+import ui.fx.native.ScrollPane
 
 public class FxNode implements Resource {
   private FxApplication application
@@ -48,7 +46,6 @@ public class FxNode implements Resource {
       }
       case TextField input {
         input.setMaxWidth(1.7976931348623157E308)
-        hBoxSetHgrow(arg0: input, arg1: Priority.ALWAYS)
         input.setOnAction((event) { application.dispatch(() {
           var callback = action
           if callback != null { callback() }
@@ -64,7 +61,6 @@ public class FxNode implements Resource {
       case TextArea input {
         input.setMaxWidth(1.7976931348623157E308)
         input.setWrapText(true)
-        hBoxSetHgrow(arg0: input, arg1: Priority.ALWAYS)
         listener = (observable) {
           var value = input.getText()!!
           var callback = edit
@@ -75,7 +71,6 @@ public class FxNode implements Resource {
       }
       case CheckBox checkbox {
         checkbox.setMaxWidth(1.7976931348623157E308)
-        hBoxSetHgrow(arg0: checkbox, arg1: Priority.ALWAYS)
         listener = (observable) {
           var value = checkbox.isSelected()
           var callback = toggle

@@ -7,8 +7,8 @@ import ui.theme.Appearance
 import ui.theme.ControlState
 import ui.UiConfiguration
 import ui.TextDirection
-import javafx.Node
-import javafx.NodeOrientation
+import ui.fx.native.Node
+import ui.fx.native.NodeOrientation
 
 String fxConfigurationStyle(UiConfiguration configuration) {
   var escaped = StringBuilder()

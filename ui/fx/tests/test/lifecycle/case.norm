@@ -2,9 +2,10 @@ package ui.fx.test.lifecycle
 
 import std.core.Exception
 import ui.fx.FxApplication
-import javafx.buttonNew
-import javafx.labelNew
-import javafx.vBoxNew
+import ui.fx.native.buttonNew
+import ui.fx.native.labelNew
+import ui.fx.native.vBoxNew
+import ui.fx.native.hBoxGetHgrow
 
 class Observations { Integer edits = 0 Boolean disposed = false }
 
@@ -13,6 +14,7 @@ Void verifiesJavaFxLifecycleAndControls() {
   var state = Observations()
   application.run(build: () {
     var input = application.input()
+    require(condition: hBoxGetHgrow(input.nativeNode()) == null, message: "core controls do not impose native HBox growth")
     input.onText((text) { state.edits = state.edits + 1 })
     input.text("中文")
     if state.edits != 0 { throw Exception(message: "model update must not emit edit") }

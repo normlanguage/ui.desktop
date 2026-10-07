@@ -21,11 +21,18 @@ import ui.MainAlignment as CoreMainAlignment
 import ui.CrossAlignment as CoreCrossAlignment
 import ui.DockArea as CoreDockArea
 import ui.theme.Theme
-import javafx.Node
-import javafx.insetsNew
-import javafx.ScrollPane
-import javafx.ScrollPaneScrollBarPolicy
-import javafx.scrollPaneNew
+import ui.fx.native.Node
+import ui.fx.native.insetsNew
+import ui.fx.native.ScrollPane
+import ui.fx.native.ScrollPaneScrollBarPolicy
+import ui.fx.native.scrollPaneNew
+import ui.fx.internal.LayoutPane
+import ui.fx.internal.LayoutMode
+import ui.fx.internal.MainAlignment
+import ui.fx.internal.CrossAlignment
+import ui.fx.internal.DockArea
+import ui.fx.internal.DimensionMode
+import ui.fx.internal.layoutPaneNew
 import std.core.Exception
 
 class FxLayoutRenderNode implements FxNodePeer, ThemedRenderNode, ConfiguredRenderNode {
@@ -83,12 +90,12 @@ class FxLayoutRenderNode implements FxNodePeer, ThemedRenderNode, ConfiguredRend
         switch specification {
           case Flex(Axis axis, Double gap, CoreMainAlignment main, CoreCrossAlignment cross, Boolean wrap, _) {
             var nativeMain = switch main {
-              case Start { break FxMainAlignment.START }
-              case Center { break FxMainAlignment.CENTER }
-              case End { break FxMainAlignment.END }
-              case SpaceBetween { break FxMainAlignment.SPACE_BETWEEN }
-              case SpaceAround { break FxMainAlignment.SPACE_AROUND }
-              case SpaceEvenly { break FxMainAlignment.SPACE_EVENLY }
+              case Start { break MainAlignment.START }
+              case Center { break MainAlignment.CENTER }
+              case End { break MainAlignment.END }
+              case SpaceBetween { break MainAlignment.SPACE_BETWEEN }
+              case SpaceAround { break MainAlignment.SPACE_AROUND }
+              case SpaceEvenly { break MainAlignment.SPACE_EVENLY }
             }
             pane.configureFlex(arg0: axis == Axis.Vertical, arg1: gap, arg2: nativeMain,
               arg3: fxCrossAlignment(cross), arg4: wrap)
@@ -153,11 +160,11 @@ class FxLayoutRenderNode implements FxNodePeer, ThemedRenderNode, ConfiguredRend
             Integer index = 0
             for node : nodes {
               var nativeArea = switch areas[index] {
-                case Top { break FxDockArea.TOP }
-                case Bottom { break FxDockArea.BOTTOM }
-                case Left { break FxDockArea.LEFT }
-                case Right { break FxDockArea.RIGHT }
-                case Center { break FxDockArea.CENTER }
+                case Top { break DockArea.TOP }
+                case Bottom { break DockArea.BOTTOM }
+                case Left { break DockArea.LEFT }
+                case Right { break DockArea.RIGHT }
+                case Center { break DockArea.CENTER }
               }
               pane.dockItem(arg0: node.nativeNode(), arg1: nativeArea)
               index = index + 1
@@ -172,11 +179,11 @@ class FxLayoutRenderNode implements FxNodePeer, ThemedRenderNode, ConfiguredRend
   Void close() { snapshot = null peer.close() }
 }
 
-private FxCrossAlignment fxCrossAlignment(CoreCrossAlignment value) {
+private CrossAlignment fxCrossAlignment(CoreCrossAlignment value) {
   switch value {
-    case Start { break FxCrossAlignment.START }
-    case Center { break FxCrossAlignment.CENTER }
-    case End { break FxCrossAlignment.END }
-    case Stretch { break FxCrossAlignment.STRETCH }
+    case Start { break CrossAlignment.START }
+    case Center { break CrossAlignment.CENTER }
+    case End { break CrossAlignment.END }
+    case Stretch { break CrossAlignment.STRETCH }
   }
 }
