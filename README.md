@@ -22,6 +22,8 @@ Run `./scripts/prepare.ps1` to build the Java adapter and verify its pinned dige
 
 Run `./gradlew.bat test --tests dev.normlanguage.ui.desktop.LayoutPaneTest` for layout contracts, `norm test ui/desktop` for backend contracts, and `norm test samples/foundation` for the real window flow. The [package workflow](.github/workflows/package.yml) owns release validation. Local development packages may be placed in an isolated Norm home; the sample descriptor remains a released dependency declaration.
 
+Windows Native Image reachability declarations live in [module resources](ui/desktop/resources/META-INF/native-image/org.openjfx). Run `./gradlew.bat verifyNativeImageMetadata` with Python 3 to compare toolkit and shader registrations against the resolved JavaFX JAR.
+
 ## Sources
 
 - [Layout implementation](ui/desktop/layout.norm) and [Java layout adapter](src/main/java/dev/normlanguage/ui/desktop/LayoutPane.java)

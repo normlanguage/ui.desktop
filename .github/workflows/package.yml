@@ -29,7 +29,7 @@ jobs:
       - name: Build layout adapter
         shell: pwsh
         run: |
-          ./gradlew.bat test --tests dev.normlanguage.ui.desktop.LayoutPaneTest publish --console=plain
+          ./gradlew.bat test --tests dev.normlanguage.ui.desktop.LayoutPaneTest verifyNativeImageMetadata publish --console=plain
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $cache = Join-Path $HOME '.norm/cache/maven'
           New-Item -ItemType Directory -Force $cache | Out-Null

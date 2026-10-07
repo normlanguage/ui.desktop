@@ -22,6 +22,8 @@ dependency(repository: "github", name: "ui.desktop", version: 7)
 
 布局契约使用 `./gradlew.bat test --tests dev.normlanguage.ui.desktop.LayoutPaneTest`；后端契约使用 `norm test ui/desktop`；真实窗口流程使用 `norm test samples/foundation`。[发布流程](.github/workflows/package.yml)负责发布验证。本地源码包可放入独立 Norm home，示例声明仍指向正式发布依赖。
 
+Windows Native Image 的动态加载与资源声明由[模块资源](ui/desktop/resources/META-INF/native-image/org.openjfx)统一维护。安装 Python 3 后运行 `./gradlew.bat verifyNativeImageMetadata`，对照实际解析的 JavaFX JAR 验证 toolkit 与 shader 声明。
+
 ## 源码索引
 
 - [布局实现](ui/desktop/layout.norm)与 [Java 适配器](src/main/java/dev/normlanguage/ui/desktop/LayoutPane.java)

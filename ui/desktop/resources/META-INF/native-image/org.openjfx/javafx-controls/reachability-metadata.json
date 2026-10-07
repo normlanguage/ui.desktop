@@ -1,0 +1,32 @@
+{
+  "reflection": [
+    {
+      "type": "com.sun.javafx.scene.control.skin.Utils",
+      "methods": [
+        {
+          "name": "getResource",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "javafx.scene.control.Control"
+    },
+    {
+      "type": "javafx.scene.control.Labeled"
+    }
+  ],
+  "resources": [
+    {
+      "glob": "com/sun/javafx/scene/control/skin/modena/modena.bss"
+    },
+    {
+      "glob": "com/sun/javafx/scene/control/skin/resources/controls.properties"
+    },
+    {
+      "bundle": "com/sun/javafx/scene/control/skin/resources/controls"
+    }
+  ]
+}
