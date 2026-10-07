@@ -2,12 +2,14 @@ package ui.fx.test.fx
 
 import ui.column
 
+import ui.fx.test.extension.reconcilesVisibleNativeChildrenWithTheirOwningScope
 import ui.fx.test.extension.mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow
 import ui.NodeKey
 
 import ui.fx.test.backend.rendersCoreDescriptorsAndReleasesTypedReferencesBeforeShowingAWindow
 import ui.fx.test.layout.reconcilesPublicLayoutsInARealJavaFxScene
 import ui.fx.test.lifecycle.verifiesJavaFxLifecycleAndControls
+import ui.fx.test.lifecycle.resolvesWindowCloseRequestsOnce
 import std.testing.Test
 import ui.fx.FxApplication
 import ui.fx.withFxRuntime
@@ -170,7 +172,9 @@ Void verifiesJavaFxApplications() {
     rendersCoreDescriptorsAndReleasesTypedReferencesBeforeShowingAWindow()
     reconcilesPublicLayoutsInARealJavaFxScene()
     verifiesJavaFxLifecycleAndControls()
+    resolvesWindowCloseRequestsOnce()
     mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow()
+    reconcilesVisibleNativeChildrenWithTheirOwningScope()
     startsAsyncFromARealComponentInitializer()
     deliversPublicAsyncFromAMountedComponentToJavaFx()
     connectsAComponentOwnedKeyToARealInput()

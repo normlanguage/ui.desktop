@@ -9,7 +9,7 @@ JavaFX implementation of the [ui protocol](https://github.com/normlanguage/ui). 
 Declare the released module in `module.norm`:
 
 ```norm
-dependency(repository: "github", name: "ui.fx", version: 6)
+dependency(repository: "github", name: "ui.fx", version: 7)
 ```
 
 Use [DesktopApp](ui/fx/desktop.norm) with `ui.Widget` controls. The [foundation application](samples/foundation/application.norm) demonstrates state, theme switching and layouts. Its [module](samples/foundation/module.norm) resolves released packages by default.
