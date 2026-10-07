@@ -6,6 +6,7 @@ import std.concurrent.Completion
 import std.concurrent.Task
 import std.concurrent.completion
 import std.context.currentContext
+import fx.graphics.imageNew
 import fx.graphics.Stage
 import fx.graphics.Node
 import fx.graphics.Scene
@@ -31,6 +32,7 @@ import fx.controls.checkBoxNew
 import fx.controls.scrollPaneNew
 
 public class FxApplication {
+  private List<String> icons
   private String title
   private Double width
   private Double height
@@ -46,7 +48,9 @@ public class FxApplication {
   private Boolean closing
   private Boolean started
 
-  FxApplication(String title, String? stylesheet = null, Double width = 760.0, Double height = 680.0) {
+  FxApplication(String title, String? stylesheet = null, Double width = 760.0, Double height = 680.0, List<String>? icons = null) {
+    List<String> defaults = ["ui/fx/icons/norm-16.png", "ui/fx/icons/norm-32.png", "ui/fx/icons/norm-48.png", "ui/fx/icons/norm-128.png", "ui/fx/icons/norm-256.png"]
+    this.icons = icons ?? defaults
     this.title = title
     require(condition: width > 0.0 && height > 0.0, message: "Window dimensions must be positive")
     this.width = width
@@ -83,6 +87,11 @@ public class FxApplication {
         activeScene = scene
         var source = stylesheet
         if source != null { scene.getStylesheets()!!.add(source) }
+        for source : icons {
+          var icon = imageNew(source)
+          if icon.isError() { throw Exception(message: "Window icon could not be loaded: " + source) }
+          window.getIcons()!!.add(icon)
+        }
         window.setTitle(title)
         window.setScene(scene)
         window.setMinWidth(420.0)

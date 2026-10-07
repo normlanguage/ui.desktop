@@ -17,12 +17,13 @@ value DesktopApp<C = Unit> {
   C? config = null
   Double width = 760.0
   Double height = 680.0
+  List<String>? icons = null
 
   Void run() {
     var configuration = this.config
     var container = if configuration == null { Container() } else { startContainer<C>(configuration) }
     try {
-      runApp(title: title, body: (scope) { describe(home) }, container: container, width: width, height: height)
+      runApp(title: title, body: (scope) { describe(home) }, container: container, width: width, height: height, icons: icons)
     } finally {
       container.close()
     }
@@ -33,8 +34,8 @@ Void runApp<C>(DesktopApp<C> app) {
   app.run()
 }
 
-Void runApp(String title, Function<View(ViewScope)> body, Container? container = null, Double width = 760.0, Double height = 680.0) {
-  var application = FxApplication(title: title, width: width, height: height)
+Void runApp(String title, Function<View(ViewScope)> body, Container? container = null, Double width = 760.0, Double height = 680.0, List<String>? icons = null) {
+  var application = FxApplication(title: title, width: width, height: height, icons: icons)
   var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application), container: container)
   application.run(build: () {
     renderer.render(View(content: ViewContent.Component(type: "application", body: body)))
