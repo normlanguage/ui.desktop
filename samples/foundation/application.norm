@@ -1,5 +1,6 @@
 package samples.foundation
 
+import ui.NodeKey
 import ui.Widget
 import ui.Column
 import ui.Row
@@ -30,8 +31,8 @@ class Foundation implements Widget {
             Text("Norm UI")
             Text("主题、布局和状态由 ui 提供")
             Row(gap: 12.0) {
-              button(text: "计数 " + count.toString(), action: () { count = count + 1 })
-              button(text: if dark { "切换浅色" } else { "切换深色" }, action: () {
+              button(key: NodeKey.Named("counter"), text: "计数 " + count.toString(), action: () { count = count + 1 })
+              button(key: NodeKey.Named("theme-toggle"), text: if dark { "切换浅色" } else { "切换深色" }, action: () {
                 dark = !dark
                 theme.setMode(if dark { ThemeMode.Dark } else { ThemeMode.Light })
               })

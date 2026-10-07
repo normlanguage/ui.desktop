@@ -95,7 +95,7 @@ public class FxApplication {
   public Void root(FxNode node) {
     checkFxThread()
     var children = container!!.getChildren()!!
-    children.remove(arg0: 0, arg1: children.size())
+    children.clear()
     children.add(node.node())
   }
 

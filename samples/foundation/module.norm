@@ -1,4 +1,4 @@
 Module module() {
   module(name: "samples.foundation", version: 1,
-    dependencies: [dependency(repository: "github", name: "ui", version: 7), dependency(repository: "github", name: "theme", version: 1), dependency(repository: "github", name: "ui.fx", version: 5)])
+    dependencies: [dependency(repository: "github", name: "fx.controls", version: 4), dependency(repository: "github", name: "ui", version: 7), dependency(repository: "github", name: "theme", version: 2), dependency(repository: "github", name: "ui.fx", version: 5)])
 }
