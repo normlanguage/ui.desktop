@@ -1,5 +1,7 @@
 package ui.fx.test.extension
 
+import ui.row
+
 import std.core.Exception
 import ui.NodeKey
 import ui.View
@@ -63,15 +65,15 @@ Void mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow() {
   var renderer = Renderer(backend: JavaFxBackend(application), scheduler: JavaFxScheduler(application))
   var records = LabelRecords()
   application.run(build: () {
-    renderer.render(View(content: ViewContent.Row([
+    renderer.render(View(content: row([
       View(key: NodeKey.Named("custom"), content: ViewContent.Native(NativeLabel(value: "初始", records: records))),
       View(key: NodeKey.Named("builtin"), content: ViewContent.Button(text: "动作", action: () {}))
-    ])))
+    ]).content))
     application.root(fxHandle(renderer.node()))
-    renderer.render(View(content: ViewContent.Row([
+    renderer.render(View(content: row([
       View(key: NodeKey.Named("builtin"), content: ViewContent.Button(text: "动作", action: () {})),
       View(key: NodeKey.Named("custom"), content: ViewContent.Native(NativeLabel(value: "更新", records: records)))
-    ])))
+    ]).content))
     require(condition: records.nodes.size() == 1, message: "reorder preserves adopted node beside built-in node")
     application.close()
   }, dispose: renderer.close)

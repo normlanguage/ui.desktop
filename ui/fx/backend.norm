@@ -2,8 +2,15 @@ package ui.fx
 
 import ui.UiScheduler
 import ui.RenderBackend
+import ui.LayoutBackend
+import ui.LayoutSpec
 import ui.ViewContent
 import ui.RenderNode
+import ui.ThemedRenderNode
+import ui.ConfiguredRenderNode
+import ui.UiConfiguration
+import ui.WidgetRole
+import ui.theme.Theme
 import ui.TextFieldRenderNode
 import ui.TextFieldHandle
 import ui.TextFieldControl
@@ -24,11 +31,13 @@ class JavaFxScheduler implements UiScheduler {
   Void report(Exception error) { application.reportFailure(error.message) }
 }
 
-class JavaFxBackend implements RenderBackend {
+class JavaFxBackend implements LayoutBackend {
   private FxApplication application
 
   JavaFxBackend(FxApplication application) { this.application = application }
   FxApplication fxApplication() { application }
+
+  RenderNode createLayout(LayoutSpec specification) { FxLayoutRenderNode(application, specification) }
 
   RenderNode create(ViewContent content) {
     FxNode node = switch content {
@@ -37,9 +46,6 @@ class JavaFxBackend implements RenderBackend {
       case Input(_, _, _) { break application.input() }
       case Multiline(_, _, _, _) { break application.textArea() }
       case Toggle(_, _) { break application.toggle() }
-      case Column(_) { break application.column() }
-      case Row(_) { break application.row() }
-      case Scroll(_) { break application.scroll() }
       case Component(_, _) { break application.component() }
       case Native(_) { throw Exception(message: "native views are created by their descriptor") }
       case WidgetObject(_) { break application.component() }
@@ -52,8 +58,24 @@ interface FxNodePeer extends RenderNode {
   FxNode fxNode()
 }
 
-class FxRenderNode implements TextFieldRenderNode, FxNodePeer {
+class FxRenderNode implements TextFieldRenderNode, FxNodePeer, ThemedRenderNode, ConfiguredRenderNode {
   private FxNode peer
+
+  private Theme? snapshot = null
+  private UiConfiguration settings = UiConfiguration()
+  private WidgetRole themeRole = WidgetRole.Default
+
+  Void theme(Theme? theme) {
+    snapshot = theme
+    peer.nativeNode().setStyle((if theme != null { fxThemeStyle(snapshot: theme, role: themeRole) } else { "" }) + fxConfigurationStyle(settings))
+  }
+
+  Void configure(UiConfiguration configuration) {
+    settings = configuration
+    fxConfigureNode(node: peer.nativeNode(), configuration: configuration)
+    var currentTheme = snapshot
+    peer.nativeNode().setStyle((if currentTheme != null { fxThemeStyle(snapshot: currentTheme, role: themeRole) } else { "" }) + fxConfigurationStyle(configuration))
+  }
 
   FxRenderNode(FxNode peer) { this.peer = peer }
 
@@ -61,6 +83,9 @@ class FxRenderNode implements TextFieldRenderNode, FxNodePeer {
   TextFieldHandle textFieldHandle() { TextFieldHandle(FxTextFieldControl(peer)) }
 
   Void update(View view) {
+    var currentTheme = snapshot
+    if currentTheme != null && themeRole != view.role { peer.nativeNode().setStyle(fxThemeStyle(snapshot: currentTheme, role: view.role) + fxConfigurationStyle(settings)) }
+    themeRole = view.role
     peer.enabled(view.enabled)
     String role = switch view.role {
       case Default { break "default" }

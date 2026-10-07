@@ -1,22 +1,23 @@
 import ui.Widget
-import ui.View
-import ui.ViewContent
-import ui.componentCallback
+import ui.Column
+import ui.CrossAlignment
+import ui.Text
+import ui.button
 import ui.fx.DesktopApp
 import ui.fx.runApp
 
 class Counter implements Widget {
   private Integer clicks = 0
   Widget build() {
-    View(content: ViewContent.Column([
-      View(content: ViewContent.Text("Clicks: ${clicks}")),
-      View(content: ViewContent.Button(text: "Click me", action: componentCallback(() { clicks = clicks + 1 })))
-    ]))
+    Column(gap: 12.0, cross: CrossAlignment.Stretch) {
+      Text(text: "Clicks: ${clicks}")
+      button(text: "Click me", action: () { clicks = clicks + 1 })
+    }
   }
 }
 
 Module module() {
-  module(dependencies: [dependency(repository: "github", name: "ui", version: 6), dependency(repository: "github", name: "ui.fx", version: 4)])
+  module(dependencies: [dependency(repository: "github", name: "ui", version: 7), dependency(repository: "github", name: "ui.fx", version: 5)])
 }
 
 Void main() { runApp(DesktopApp(title: "Norm UI", home: Counter())) }

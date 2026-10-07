@@ -1,8 +1,13 @@
 package ui.fx.test.fx
 
+import ui.column
+
 import ui.fx.test.extension.mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow
 import ui.NodeKey
 
+import ui.fx.test.backend.rendersCoreDescriptorsAndReleasesTypedReferencesBeforeShowingAWindow
+import ui.fx.test.layout.reconcilesPublicLayoutsInARealJavaFxScene
+import ui.fx.test.lifecycle.verifiesJavaFxLifecycleAndControls
 import std.testing.Test
 import ui.fx.FxApplication
 import ui.fx.withFxRuntime
@@ -19,7 +24,6 @@ import ui.fx.fxHandle
 import ui.Widget
 import ui.text
 import ui.button
-import ui.column
 import ui.row
 import ui.Key
 import ui.TextFieldReference
@@ -114,19 +118,19 @@ Void mountsARealJavaFxTreeFromNormAndDisposesOnTheUiThread() {
   var scope = ViewScope(runtime: runtime, scheduler: JavaFxScheduler(application))
   var title = State<String>(runtime: runtime, initial: "中文任务")
   application.run(build: () {
-    renderer.render(View(content: ViewContent.Column([
+    renderer.render(View(content: column([
       View(key: NodeKey.Named("heading"), content: ViewContent.Text("Norm GUI")),
       View(key: NodeKey.Named("title"), content: ViewContent.Input(placeholder: "任务标题", text: title.binding(), submit: (String text) {})),
       View(key: NodeKey.Named("action"), content: ViewContent.Button(text: "完成", action: () { title.value = ("已完成") }))
-    ])))
+    ]).content))
     application.root(fxHandle(renderer.node()))
     scope.execute(() {
       async { "后台完成" }.then {
       require(condition: result == "后台完成", message: "scope delivers typed background result")
-      renderer.render(View(content: ViewContent.Column([
+      renderer.render(View(content: column([
         View(key: NodeKey.Named("action"), content: ViewContent.Button(text: "完成", action: () {})),
         View(key: NodeKey.Named("title"), content: ViewContent.Input(placeholder: "任务标题", text: title.binding(), submit: (String text) {}))
-      ])))
+      ]).content))
       application.close()
       }
       return
@@ -163,6 +167,9 @@ Void preservesSelfManagedInputAcrossWidgetRebuilds() {
 @Test
 Void verifiesJavaFxApplications() {
   withFxRuntime(() {
+    rendersCoreDescriptorsAndReleasesTypedReferencesBeforeShowingAWindow()
+    reconcilesPublicLayoutsInARealJavaFxScene()
+    verifiesJavaFxLifecycleAndControls()
     mixesAdoptedJavaFxNodesWithBuiltInNodesInARealWindow()
     startsAsyncFromARealComponentInitializer()
     deliversPublicAsyncFromAMountedComponentToJavaFx()

@@ -2,18 +2,18 @@ package ui.fx
 
 import std.core.Exception
 import std.io.Resource
-import fx.base.Observable
-import fx.base.fxCollectionsSort
-import fx.graphics.Node
-import fx.graphics.Pane
-import fx.graphics.Priority
-import fx.graphics.hBoxSetHgrow
-import fx.controls.Button
-import fx.controls.TextField
-import fx.controls.TextArea
-import fx.controls.CheckBox
-import fx.controls.Labeled
-import fx.controls.ScrollPane
+import javafx.Observable
+import javafx.fxCollectionsSort
+import javafx.Node
+import javafx.Pane
+import javafx.Priority
+import javafx.hBoxSetHgrow
+import javafx.Button
+import javafx.TextField
+import javafx.TextArea
+import javafx.CheckBox
+import javafx.Labeled
+import javafx.ScrollPane
 
 public class FxNode implements Resource {
   private FxApplication application
@@ -216,7 +216,7 @@ public class FxNode implements Resource {
       }
       case Pane pane {
         var children = pane.getChildren()!!
-        children.remove(arg0: 0, arg1: children.size())
+        children.clear()
       }
       case ScrollPane scroll { scroll.setContent(null) }
       case Button button { button.setOnAction(null) }

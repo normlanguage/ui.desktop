@@ -1,92 +1,87 @@
 package ui.fx.test.lifecycle
 
-import std.testing.Test
 import std.core.Exception
 import ui.fx.FxApplication
-import ui.fx.withFxRuntime
-import fx.controls.buttonNew
-import fx.controls.labelNew
-import fx.graphics.vBoxNew
+import javafx.buttonNew
+import javafx.labelNew
+import javafx.vBoxNew
 
 class Observations { Integer edits = 0 Boolean disposed = false }
 
-@Test
 Void verifiesJavaFxLifecycleAndControls() {
-  withFxRuntime(() {
-    var application = FxApplication("Norm JavaFX controls")
-    var state = Observations()
-    application.run(build: () {
-      var input = application.input()
-      input.onText((text) { state.edits = state.edits + 1 })
-      input.text("中文")
-      if state.edits != 0 { throw Exception(message: "model update must not emit edit") }
-      if input.readText() != "中文" { throw Exception(message: "input value") }
-      input.clear()
-      if state.edits == 0 { throw Exception(message: "native edit must emit event") }
-      var column = application.column()
-      var first = application.text()
-      first.text("first")
-      var second = application.button()
-      second.text("second")
-      column.children([first, second, input])
-      application.root(column)
-      column.children([input, second, first])
-      application.later(() { application.close() })
-    }, dispose: () { state.disposed = true })
-    require(condition: state.disposed, message: "application disposes before returning")
-    var failed = FxApplication("Norm JavaFX failure")
-    var failure = Exception(message: "event failure")
-    try {
-      failed.run(build: () { throw failure }, dispose: () {})
-      throw Exception(message: "callback failure was lost")
-    } catch Exception error { require(condition: error == failure, message: "failure identity") }
-    var cleanupFailure = FxApplication("Norm JavaFX cleanup failure")
-    var cleanupError = Exception(message: "cleanup failure")
-    try {
-      cleanupFailure.run(build: () { cleanupFailure.close() }, dispose: () { throw cleanupError })
-      throw Exception(message: "cleanup failure was lost")
-    } catch Exception error { require(condition: error == cleanupError, message: "cleanup failure identity") }
-    var aborted = FxApplication("Norm JavaFX abort")
-    try {
-      aborted.run(build: () { require(condition: false, message: "fatal callback") }, dispose: () {})
-      throw Exception(message: "aborted callback was lost")
-    } catch Exception error { require(condition: error.message == "GUI callback aborted", message: "aborted callback releases waiter") }
-    var borrowedApp = FxApplication("Borrowed controls")
-    var observations = Observations()
-    borrowedApp.run(build: () {
-      var button = buttonNew()
-      button.setOnAction((event) { observations.edits = observations.edits + 1 })
-      var pane = vBoxNew(8.0)
-      pane.getChildren()!!.add(button)
-      var wrapped = borrowedApp.adopt(pane)
-      var wrappedButton = borrowedApp.adopt(button)
-      require(condition: wrapped.nativeNode() == pane, message: "adoption preserves native identity")
-      require(condition: wrappedButton.nativeNode() == button, message: "control adoption preserves native identity")
-      var column = borrowedApp.column()
-      column.children([wrapped, borrowedApp.text()])
-      borrowedApp.root(column)
-      require(condition: borrowedApp.scene().getStylesheets()!!.size() == 0, message: "no implicit theme stylesheet")
-      wrapped.dispatch(() { observations.edits = observations.edits + 1 })
-      require(condition: observations.edits == 1, message: "native event enters application boundary")
-      wrapped.close()
-      wrapped.close()
-      wrappedButton.close()
-      wrappedButton.close()
-      wrapped.dispatch(() { observations.edits = observations.edits + 1 })
-      require(condition: observations.edits == 1, message: "closed wrapper ignores late events")
-      require(condition: pane.getChildren()!!.size() == 1, message: "borrowed pane keeps its children")
-      button.fire()
-      require(condition: observations.edits == 2, message: "borrowed button retains its own action")
-      borrowedApp.later(() { borrowedApp.close() })
-    }, dispose: () {})
-    var stylesheet = "data:text/css,.root%7B-fx-background-color:%23abcdef;%7D"
-    var styledApp = FxApplication("Configured styles", stylesheet)
-    styledApp.run(build: () {
-      var native = labelNew()
-      var wrapped = styledApp.adopt(native)
-      styledApp.root(wrapped)
-      require(condition: styledApp.scene().getStylesheets()!!.contains(stylesheet), message: "caller stylesheet reaches scene")
-      styledApp.later(() { styledApp.close() })
-    }, dispose: () {})
-  })
+  var application = FxApplication("Norm JavaFX controls")
+  var state = Observations()
+  application.run(build: () {
+    var input = application.input()
+    input.onText((text) { state.edits = state.edits + 1 })
+    input.text("中文")
+    if state.edits != 0 { throw Exception(message: "model update must not emit edit") }
+    if input.readText() != "中文" { throw Exception(message: "input value") }
+    input.clear()
+    if state.edits == 0 { throw Exception(message: "native edit must emit event") }
+    var column = application.component()
+    var first = application.text()
+    first.text("first")
+    var second = application.button()
+    second.text("second")
+    column.children([first, second, input])
+    application.root(column)
+    column.children([input, second, first])
+    application.later(() { application.close() })
+  }, dispose: () { state.disposed = true })
+  require(condition: state.disposed, message: "application disposes before returning")
+  var failed = FxApplication("Norm JavaFX failure")
+  var failure = Exception(message: "event failure")
+  try {
+    failed.run(build: () { throw failure }, dispose: () {})
+    throw Exception(message: "callback failure was lost")
+  } catch Exception error { require(condition: error == failure, message: "failure identity") }
+  var cleanupFailure = FxApplication("Norm JavaFX cleanup failure")
+  var cleanupError = Exception(message: "cleanup failure")
+  try {
+    cleanupFailure.run(build: () { cleanupFailure.close() }, dispose: () { throw cleanupError })
+    throw Exception(message: "cleanup failure was lost")
+  } catch Exception error { require(condition: error == cleanupError, message: "cleanup failure identity") }
+  var aborted = FxApplication("Norm JavaFX abort")
+  try {
+    aborted.run(build: () { require(condition: false, message: "fatal callback") }, dispose: () {})
+    throw Exception(message: "aborted callback was lost")
+  } catch Exception error { require(condition: error.message == "GUI callback aborted", message: "aborted callback releases waiter") }
+  var borrowedApp = FxApplication("Borrowed controls")
+  var observations = Observations()
+  borrowedApp.run(build: () {
+    var button = buttonNew()
+    button.setOnAction((event) { observations.edits = observations.edits + 1 })
+    var pane = vBoxNew(8.0)
+    pane.getChildren()!!.add(button)
+    var wrapped = borrowedApp.adopt(pane)
+    var wrappedButton = borrowedApp.adopt(button)
+    require(condition: wrapped.nativeNode() == pane, message: "adoption preserves native identity")
+    require(condition: wrappedButton.nativeNode() == button, message: "control adoption preserves native identity")
+    var column = borrowedApp.component()
+    column.children([wrapped, borrowedApp.text()])
+    borrowedApp.root(column)
+    require(condition: borrowedApp.scene().getStylesheets()!!.size() == 0, message: "no implicit theme stylesheet")
+    wrapped.dispatch(() { observations.edits = observations.edits + 1 })
+    require(condition: observations.edits == 1, message: "native event enters application boundary")
+    wrapped.close()
+    wrapped.close()
+    wrappedButton.close()
+    wrappedButton.close()
+    wrapped.dispatch(() { observations.edits = observations.edits + 1 })
+    require(condition: observations.edits == 1, message: "closed wrapper ignores late events")
+    require(condition: pane.getChildren()!!.size() == 1, message: "borrowed pane keeps its children")
+    button.fire()
+    require(condition: observations.edits == 2, message: "borrowed button retains its own action")
+    borrowedApp.later(() { borrowedApp.close() })
+  }, dispose: () {})
+  var stylesheet = "data:text/css,.root%7B-fx-background-color:%23abcdef;%7D"
+  var styledApp = FxApplication("Configured styles", stylesheet)
+  styledApp.run(build: () {
+    var native = labelNew()
+    var wrapped = styledApp.adopt(native)
+    styledApp.root(wrapped)
+    require(condition: styledApp.scene().getStylesheets()!!.contains(stylesheet), message: "caller stylesheet reaches scene")
+    styledApp.later(() { styledApp.close() })
+  }, dispose: () {})
 }

@@ -1,0 +1,94 @@
+package samples.foundation.test.flow
+
+import std.testing.Test
+import samples.foundation.Foundation
+import ui.RenderNode
+import ui.ViewContent
+import ui.LayoutBackend
+import ui.LayoutSpec
+import ui.fx.FxNode
+import ui.Renderer
+import ui.fx.FxApplication
+import ui.fx.JavaFxBackend
+import ui.fx.JavaFxScheduler
+import ui.fx.fxHandle
+import ui.fx.withFxRuntime
+import ui.theme.ThemeManager
+import ui.theme.ThemeDefinition
+import ui.theme.ThemeMode
+import ui.theme.Color
+import javafx.Button
+
+@Test
+Void opensFoundationAndUpdatesStateAndThemeThroughNativeActions() {
+  withFxRuntime(() {
+    var themes = ThemeManager(definition: ThemeDefinition(primary: Color(hex: "#1677FF")))
+    var application = FxApplication(title: "Foundation end-to-end", width: 640.0, height: 360.0)
+    var backend = ObservedBackend(backend: JavaFxBackend(application))
+    var renderer = Renderer(backend: backend, scheduler: JavaFxScheduler(application))
+    var checks = Checks()
+    try {
+      application.run(build: () {
+        renderer.render(Foundation(theme: themes))
+        var root = fxHandle(renderer.node())
+        application.root(root)
+        application.later(() {
+          root.nativeNode().applyCss()
+          FxNode? counterPeer = null
+          FxNode? themePeer = null
+          for peer : backend.nodes {
+            if peer.nativeNode().getId() == "counter" { counterPeer = peer }
+            if peer.nativeNode().getId() == "theme-toggle" { themePeer = peer }
+          }
+          var initialCount = backend.nodes.size()
+          var retainedCounter = counterPeer!!
+          var retainedTheme = themePeer!!
+          var firstButton = retainedCounter.nativeNode()
+          var themeButton = retainedTheme.nativeNode()
+          switch firstButton {
+            case Button counter {
+              require(condition: counter.getText() == "计数 0", message: "initial count is displayed in real window")
+              counter.fire()
+              application.later(() {
+                require(condition: counter.getText() == "计数 1", message: "native click updates widget state")
+                require(condition: fxHandle(renderer.node()) == root, message: "widget root survives state update")
+                require(condition: retainedCounter.nativeNode() == counter && backend.nodes.size() == initialCount, message: "button survives state update")
+                switch themeButton {
+                  case Button toggle {
+                    var initialStyle = toggle.getStyle()
+                    toggle.fire()
+                    application.later(() {
+                      require(condition: toggle.getText() == "切换浅色", message: "native click switches theme state")
+                      require(condition: toggle.getStyle() != initialStyle, message: "theme change projects new native palette")
+                      require(condition: retainedTheme.nativeNode() == toggle && backend.nodes.size() == initialCount, message: "theme change retains native control")
+                      checks.completed = true
+                      application.close()
+                    })
+                  }
+                  case _ { require(condition: false, message: "theme action resolves to JavaFX Button") }
+                }
+                checks.themeLocated = true
+              })
+            }
+            case _ { require(condition: false, message: "counter action resolves to JavaFX Button") }
+          }
+          checks.counterLocated = true
+        })
+      }, dispose: () { renderer.close() checks.disposed = true })
+      require(condition: checks.completed && checks.disposed && checks.themeLocated && checks.counterLocated, message: "window checks complete and renderer disposes naturally")
+    } finally { themes.close() }
+  })
+}
+
+class Checks { Boolean completed = false Boolean disposed = false Boolean themeLocated = false Boolean counterLocated = false }
+
+class ObservedBackend implements LayoutBackend {
+  JavaFxBackend backend
+  List<FxNode> nodes = []
+  RenderNode create(ViewContent content) {
+    var node = backend.create(content)
+    nodes.add(fxHandle(node))
+    node
+  }
+  RenderNode createLayout(LayoutSpec specification) { backend.createLayout(specification) }
+}

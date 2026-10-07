@@ -1,0 +1,182 @@
+package ui.fx
+
+import ui.NativeView
+import ui.Insets as CoreInsets
+import ui.GridBreakpoint
+import ui.GridCell
+import ui.FlexSizing
+import ui.RenderNode
+import ui.ThemedRenderNode
+import ui.ConfiguredRenderNode
+import ui.UiConfiguration
+import ui.View
+import ui.ViewContent
+import ui.LayoutView
+import ui.LayoutSpec
+import ui.Axis
+import ui.Dimension
+import ui.SizeConstraints
+import ui.WidgetRole
+import ui.MainAlignment as CoreMainAlignment
+import ui.CrossAlignment as CoreCrossAlignment
+import ui.DockArea as CoreDockArea
+import ui.theme.Theme
+import javafx.Node
+import javafx.insetsNew
+import javafx.ScrollPane
+import javafx.ScrollPaneScrollBarPolicy
+import javafx.scrollPaneNew
+import std.core.Exception
+
+class FxLayoutRenderNode implements FxNodePeer, ThemedRenderNode, ConfiguredRenderNode {
+  private FxNode peer
+  private LayoutSpec specification
+  private Theme? snapshot = null
+  private WidgetRole role = WidgetRole.Default
+  private UiConfiguration currentConfiguration = UiConfiguration()
+
+  FxLayoutRenderNode(FxApplication application, LayoutSpec specification) {
+    this.specification = specification
+    Node node = switch specification {
+      case Flex(_, _, _, _, _, _) { break layoutPaneNew(LayoutMode.FLEX) }
+      case Grid(_, _, _, _) { break layoutPaneNew(LayoutMode.GRID) }
+      case Box(_, _) { break layoutPaneNew(LayoutMode.BOX) }
+      case Stack(_, _) { break layoutPaneNew(LayoutMode.STACK) }
+      case Dock(_) { break layoutPaneNew(LayoutMode.DOCK) }
+      case Masonry(_, _) { break layoutPaneNew(LayoutMode.MASONRY) }
+      case Scroll(_, _, _) { break scrollPaneNew() }
+    }
+    peer = FxNode(application: application, node: node)
+  }
+
+  FxNode fxNode() { peer }
+  Void theme(Theme? theme) {
+    snapshot = theme
+    peer.nativeNode().setStyle((if theme != null { fxThemeStyle(snapshot: theme, role: role) } else { "" }) + fxConfigurationStyle(currentConfiguration))
+  }
+  Void configure(UiConfiguration configuration) {
+    this.currentConfiguration = configuration
+    fxConfigureNode(node: peer.nativeNode(), configuration: configuration)
+    var current = snapshot
+    peer.nativeNode().setStyle((if current != null { fxThemeStyle(snapshot: current, role: role) } else { "" }) + fxConfigurationStyle(currentConfiguration))
+  }
+  Void update(View view) {
+    peer.enabled(view.enabled)
+    role = view.role
+    String identity = switch view.key {
+      case Named(String value) { break value }
+      case Id(Integer value) { break value.toString() }
+      case _ { break "" }
+    }
+    peer.appearance(role: "layout", key: identity)
+    switch view.content {
+      case Native(NativeView descriptor) {
+        switch descriptor {
+          case LayoutView layout { specification = layout.specification }
+          case _ { throw Exception(message: "layout node requires layout descriptor") }
+        }
+      }
+      case _ { throw Exception(message: "layout node requires native descriptor") }
+    }
+    switch peer.nativeNode() {
+      case LayoutPane pane {
+        switch specification {
+          case Flex(Axis axis, Double gap, CoreMainAlignment main, CoreCrossAlignment cross, Boolean wrap, _) {
+            var nativeMain = switch main {
+              case Start { break FxMainAlignment.START }
+              case Center { break FxMainAlignment.CENTER }
+              case End { break FxMainAlignment.END }
+              case SpaceBetween { break FxMainAlignment.SPACE_BETWEEN }
+              case SpaceAround { break FxMainAlignment.SPACE_AROUND }
+              case SpaceEvenly { break FxMainAlignment.SPACE_EVENLY }
+            }
+            pane.configureFlex(arg0: axis == Axis.Vertical, arg1: gap, arg2: nativeMain,
+              arg3: fxCrossAlignment(cross), arg4: wrap)
+          }
+          case Grid(Integer columns, Double gap, _, List<GridBreakpoint> breakpoints) {
+            pane.configureGrid(arg0: columns, arg1: gap)
+            pane.clearBreakpoints()
+            for breakpoint : breakpoints { pane.breakpoint(arg0: breakpoint.minimumWidth, arg1: breakpoint.columns) }
+          }
+          case Box(SizeConstraints size, CoreInsets padding) {
+            pane.setPadding(insetsNew(arg0: padding.top, arg1: padding.right, arg2: padding.bottom, arg3: padding.left))
+            DimensionMode widthMode = switch size.width { case Content { break DimensionMode.CONTENT } case Fixed(_) { break DimensionMode.FIXED } case Fill { break DimensionMode.FILL } }
+            DimensionMode heightMode = switch size.height { case Content { break DimensionMode.CONTENT } case Fixed(_) { break DimensionMode.FIXED } case Fill { break DimensionMode.FILL } }
+            Double width = switch size.width { case Fixed(Double value) { break value } case _ { break 0.0 } }
+            Double height = switch size.height { case Fixed(Double value) { break value } case _ { break 0.0 } }
+            pane.configureWidth(arg0: widthMode, arg1: width, arg2: size.minWidth, arg3: size.maxWidth ?? 1.7976931348623157E308)
+            pane.configureHeight(arg0: heightMode, arg1: height, arg2: size.minHeight, arg3: size.maxHeight ?? 1.7976931348623157E308)
+          }
+          case Stack(CoreCrossAlignment horizontal, CoreCrossAlignment vertical) {
+            pane.configureStack(arg0: fxCrossAlignment(horizontal), arg1: fxCrossAlignment(vertical))
+          }
+          case Masonry(Double minimumColumnWidth, Double gap) {
+            pane.configureMasonry(arg0: minimumColumnWidth, arg1: gap)
+          }
+          case _ {}
+        }
+      }
+      case ScrollPane scroll {
+        switch specification {
+          case Scroll(Axis axis, Boolean fitWidth, Boolean fitHeight) {
+            scroll.setFitToWidth(fitWidth)
+            scroll.setFitToHeight(fitHeight)
+            scroll.setHbarPolicy(if axis == Axis.Vertical { ScrollPaneScrollBarPolicy.NEVER } else { ScrollPaneScrollBarPolicy.AS_NEEDED })
+            scroll.setVbarPolicy(if axis == Axis.Horizontal { ScrollPaneScrollBarPolicy.NEVER } else { ScrollPaneScrollBarPolicy.AS_NEEDED })
+          }
+          case _ {}
+        }
+      }
+      case _ {}
+    }
+    var current = snapshot
+    peer.nativeNode().setStyle((if current != null { fxThemeStyle(snapshot: current, role: role) } else { "" }) + fxConfigurationStyle(currentConfiguration))
+  }
+  Void children(List<RenderNode> children) {
+    List<FxNode> nodes = [for (child : children) fxHandle(child)]
+    peer.children(nodes)
+    switch peer.nativeNode() {
+      case LayoutPane pane {
+        switch specification {
+          case Flex(_, _, _, _, _, List<FlexSizing> items) {
+            Integer index = 0
+            for node : nodes {
+              pane.flexItem(arg0: node.nativeNode(), arg1: items[index].grow, arg2: items[index].shrink)
+              index = index + 1
+            }
+          }
+          case Grid(_, _, List<GridCell> items, _) {
+            Integer index = 0
+            for node : nodes { pane.gridItem(arg0: node.nativeNode(), arg1: items[index].span) index = index + 1 }
+          }
+          case Dock(List<CoreDockArea> areas) {
+            Integer index = 0
+            for node : nodes {
+              var nativeArea = switch areas[index] {
+                case Top { break FxDockArea.TOP }
+                case Bottom { break FxDockArea.BOTTOM }
+                case Left { break FxDockArea.LEFT }
+                case Right { break FxDockArea.RIGHT }
+                case Center { break FxDockArea.CENTER }
+              }
+              pane.dockItem(arg0: node.nativeNode(), arg1: nativeArea)
+              index = index + 1
+            }
+          }
+          case _ {}
+        }
+      }
+      case _ {}
+    }
+  }
+  Void close() { snapshot = null peer.close() }
+}
+
+private FxCrossAlignment fxCrossAlignment(CoreCrossAlignment value) {
+  switch value {
+    case Start { break FxCrossAlignment.START }
+    case Center { break FxCrossAlignment.CENTER }
+    case End { break FxCrossAlignment.END }
+    case Stretch { break FxCrossAlignment.STRETCH }
+  }
+}

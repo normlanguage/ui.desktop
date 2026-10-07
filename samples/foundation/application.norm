@@ -1,0 +1,48 @@
+package samples.foundation
+
+import ui.NodeKey
+import ui.Widget
+import ui.Column
+import ui.Row
+import ui.Box
+import ui.Insets
+import ui.Text
+import ui.CrossAlignment
+import ui.ThemeProvider
+import ui.UiProvider
+import ui.UiConfiguration
+import ui.button
+import ui.fx.DesktopApp
+import ui.theme.ThemeManager
+import ui.theme.ThemeDefinition
+import ui.theme.ThemeMode
+import ui.theme.Color
+
+class Foundation implements Widget {
+  ThemeManager theme
+  private Boolean dark = false
+  private Integer count = 0
+
+  Widget build() {
+    UiProvider(configuration: UiConfiguration(fontSize: 16.0), child:
+      ThemeProvider(source: theme, child:
+        Box(padding: Insets(top: 24.0, right: 24.0, bottom: 24.0, left: 24.0), content:
+          Column(gap: 16.0, cross: CrossAlignment.Stretch) {
+            Text("Norm UI")
+            Text("主题、布局和状态由 ui 提供")
+            Row(gap: 12.0) {
+              button(key: NodeKey.Named("counter"), text: "计数 " + count.toString(), action: () { count = count + 1 })
+              button(key: NodeKey.Named("theme-toggle"), text: if dark { "切换浅色" } else { "切换深色" }, action: () {
+                dark = !dark
+                theme.setMode(if dark { ThemeMode.Dark } else { ThemeMode.Light })
+              })
+            }
+          })))
+  }
+}
+
+main() {
+  var theme = ThemeManager(definition: ThemeDefinition(primary: Color(hex: "#1677FF")))
+  try { DesktopApp(title: "Norm UI foundation", home: Foundation(theme: theme), width: 640.0, height: 360.0).run() }
+  finally { theme.close() }
+}

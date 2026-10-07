@@ -1,0 +1,4 @@
+Module module() {
+  module(name: "samples.foundation", version: 1,
+    dependencies: [dependency(repository: "github", name: "javafx", version: 3), dependency(repository: "github", name: "ui", version: 7), dependency(repository: "github", name: "ui.theme", version: 2), dependency(repository: "github", name: "ui.fx", version: 5)])
+}
