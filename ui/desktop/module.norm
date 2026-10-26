@@ -1,8 +1,8 @@
 Module module() {
-  module(name: "ui.desktop", version: 7,
+  module(name: "ui.desktop", version: 8,
     exports: ["application", "node", "runtime", "backend", "desktop", "native", "theme", "native.Event", "native.ObservableList", "native.FXCollections", "native.StringProperty", "native.BooleanProperty", "native.ObservableValue", "native.Observable", "native.Parent", "native.Pane", "native.Region", "native.Window", "native.EventTarget", "native.Styleable", "native.Platform", "native.Node", "native.Stage", "native.Scene", "native.StackPane", "native.VBox", "native.HBox", "native.Insets", "native.Priority", "native.NodeOrientation", "native.Labeled", "native.Button", "native.Label", "native.TextArea", "native.TabPane", "native.Tab", "native.SingleSelectionModel", "native.TextField", "native.CheckBox", "native.ScrollPane", "native.ScrollPaneScrollBarPolicy", "native.Alert", "native.AlertAlertType", "native.TextInputControl", "native.PasswordField", "native.Orientation"],
-    dependencies: [dependency(repository: "norm", name: "java.base", version: 1), dependency(repository: "github", name: "ui.theme", version: 3), dependency(repository: "github", name: "ui", version: 9), dependency(repository: "github", name: "di", version: 4)],
-    binding: jarBinding(target: mavenJar(group: "dev.normlanguage", artifact: "ui-desktop-layout", version: "2", resolution: sha256("a09763b4b25a7e77f5a9a391211d6f320ed70e39b442050b915d2539ab3fcebb")), api: [
+    dependencies: [dependency(repository: "norm", name: "java.base", version: 1), dependency(repository: "github", name: "ui.theme", version: 4), dependency(repository: "github", name: "ui", version: 10), dependency(repository: "github", name: "di", version: 10)],
+    binding: jarBinding(target: mavenJar(group: "dev.normlanguage", artifact: "ui-desktop-layout", version: "3", resolution: sha256("78668cfcc032d0e4d84ab52053c09d3da5ddbcdc82254d82f5f58f97db4fa42e")), api: [
       jarType(name: "dev.normlanguage.ui.desktop.LayoutPane", alias: "internal.LayoutPane", members: ["new", "configureFlex", "flexItem", "configureGrid", "gridItem", "clearBreakpoints", "breakpoint", "configureStack", "dockItem", "configureMasonry", "configureWidth", "configureHeight"]),
       jarType(name: "dev.normlanguage.ui.desktop.LayoutMode", alias: "internal.LayoutMode", members: []),
       jarType(name: "dev.normlanguage.ui.desktop.MainAlignment", alias: "internal.MainAlignment", members: []),
@@ -50,3 +50,9 @@ Module module() {
         jarType(name: "javafx.geometry.Orientation", alias: "native.Orientation", members: [])
     ]))
 }
+
+
+
+
+
+

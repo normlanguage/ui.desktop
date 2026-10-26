@@ -4,7 +4,7 @@ plugins {
     id("org.openjfx.javafxplugin") version "0.1.0"
 }
 group = "dev.normlanguage"
-version = "2"
+version = "3"
 repositories { mavenCentral() }
 java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
 javafx { version = "25.0.2"; modules("javafx.base", "javafx.graphics", "javafx.controls"); configuration = "api" }
@@ -29,3 +29,4 @@ publishing {
     publications { create<MavenPublication>("library") { from(components["java"]) } }
     repositories { maven { url = uri(layout.buildDirectory.dir("repository")) } }
 }
+
