@@ -28,7 +28,7 @@ Windows Native Image reachability declarations live in [module resources](ui/des
 
 - [Layout implementation](ui/desktop/layout.norm) and [Java layout adapter](src/main/java/dev/normlanguage/ui/desktop/LayoutPane.java)
 - [Theme and configuration projection](ui/desktop/theme.norm)
-- [Window lifecycle](ui/desktop/application.norm) and [JavaFX runtime](ui/desktop/runtime.norm)
+- [Window lifecycle](ui/desktop/application.norm), [JavaFX runtime](ui/desktop/runtime.norm) and [failure logging verification](scripts/verify-logging.ps1)
 - [Close confirmation](samples/foundation/application.norm) and [close lifecycle contracts](ui/desktop/tests/test/lifecycle/case.norm)
 - [Sample ownership](samples/README.md)
 

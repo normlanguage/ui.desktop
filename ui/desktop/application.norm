@@ -1,5 +1,6 @@
 package ui.desktop
 
+import std.logging.logError
 import std.core.Exception
 import std.core.Unit
 import std.concurrent.Completion
@@ -173,7 +174,7 @@ public class FxApplication {
   public Void reportFailure(String message) {
     checkFxThread()
     if closing { return }
-    printLine(message)
+    logError(message)
     var alert = alertNew(AlertAlertType.ERROR)
     alert.initOwner(stage)
     alert.setTitle("操作失败")
