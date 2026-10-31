@@ -1,0 +1,16 @@
+package samples.logging
+
+import std.testing.Test
+import ui.desktop.FxApplication
+import ui.desktop.withFxRuntime
+
+@Test
+Void reportsFailuresInARealWindow() {
+  withFxRuntime(() {
+    var application = FxApplication("Failure reporting")
+    application.run(build: () {
+      application.reportFailure("Unable to save changes")
+      application.later(() { application.close() })
+    }, dispose: () {})
+  })
+}

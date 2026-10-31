@@ -9,7 +9,7 @@
 在 `module.norm` 中声明正式发布的模块：
 
 ```norm
-dependency(repository: "github", name: "ui.desktop", version: 7)
+dependency(repository: "github", name: "ui.desktop", version: 9)
 ```
 
 使用 [DesktopApp](ui/desktop/desktop.norm)承载 `ui.Widget`。[基础示例](samples/foundation/application.norm)展示状态、主题切换与布局，其[模块声明](samples/foundation/module.norm)默认解析正式包。
@@ -28,7 +28,7 @@ Windows Native Image 的动态加载与资源声明由[模块资源](ui/desktop/
 
 - [布局实现](ui/desktop/layout.norm)与 [Java 适配器](src/main/java/dev/normlanguage/ui/desktop/LayoutPane.java)
 - [主题与配置投影](ui/desktop/theme.norm)
-- [窗口生命周期](ui/desktop/application.norm)与 [JavaFX 运行时](ui/desktop/runtime.norm)
+- [窗口生命周期](ui/desktop/application.norm)、[JavaFX 运行时](ui/desktop/runtime.norm)与[错误日志验证](scripts/verify-logging.ps1)
 - [退出确认](samples/foundation/application.norm)与 [关闭生命周期契约](ui/desktop/tests/test/lifecycle/case.norm)
 - [示例职责](samples/README.zh-CN.md)
 
