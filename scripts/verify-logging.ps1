@@ -7,7 +7,7 @@ $previousOutputs = $env:NORM_LOG_OUTPUTS
 try {
     $env:NORM_LOG_LEVEL = 'error'
     $env:NORM_LOG_OUTPUTS = '[{"name":"std.logging.ConsoleLogOutputer"}]'
-    $output = & $NormExecutable test (Join-Path $root 'ui/desktop') --filter ui.desktop.test.logging --format json 2> $diagnostics
+    $output = & $NormExecutable test (Join-Path $root 'samples/logging') --format json 2> $diagnostics
     if ($LASTEXITCODE -ne 0) { throw "Logging window failed: $output" }
     $report = ($output -join [Environment]::NewLine) | ConvertFrom-Json
     if ($report.status -ne 'success' -or $report.tests.passed -ne 1) { throw "Unexpected logging test result: $output" }

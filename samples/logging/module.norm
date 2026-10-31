@@ -1,0 +1,1 @@
+Module module() { return module(name: "samples.logging", version: 1, dependencies: [dependency(repository: "github", name: "ui.desktop", version: 9)]) }

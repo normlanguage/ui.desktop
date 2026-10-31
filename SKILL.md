@@ -1,6 +1,6 @@
 # ui.desktop Skill
 
-Use this skill to work with Norm module `ui.desktop` version 8. Use only declarations listed below.
+Use this skill to work with Norm module `ui.desktop` version 9. Use only declarations listed below.
 
 ## `ui.desktop`
 

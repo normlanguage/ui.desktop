@@ -1,4 +1,4 @@
-package ui.desktop.test.logging
+package samples.logging
 
 import std.testing.Test
 import ui.desktop.FxApplication

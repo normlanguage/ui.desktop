@@ -9,7 +9,7 @@
 在 `module.norm` 中声明正式发布的模块：
 
 ```norm
-dependency(repository: "github", name: "ui.desktop", version: 7)
+dependency(repository: "github", name: "ui.desktop", version: 9)
 ```
 
 使用 [DesktopApp](ui/desktop/desktop.norm)承载 `ui.Widget`。[基础示例](samples/foundation/application.norm)展示状态、主题切换与布局，其[模块声明](samples/foundation/module.norm)默认解析正式包。
