@@ -68,6 +68,22 @@ if set(included) != objects or len(included) != len(set(included)):
     issues.append(f"included shader objects mismatch: missing={sorted(objects - set(included))}, extra={sorted(set(included) - objects)}, duplicates={sorted(name for name, count in Counter(included).items() if count > 1)}")
 if invalid_methods:
     issues.append(f"incorrect loadShader reflection signatures: {sorted(invalid_methods)}")
+# GlassDnD.cpp and GlassClipboard.cpp resolve these members through JNI when
+# pointer input activates the Windows drop target in a text control.
+clipboard_callbacks = {
+    "com.sun.glass.ui.win.WinDnDClipboard": ({"getInstance": [], "getDragButton": [],
+        "setDragButton": ["int"], "setSourceSupportedActions": ["int"]}, []),
+    "com.sun.glass.ui.win.WinSystemClipboard": ({"fosSerialize": ["java.lang.String", "long"]}, ["ptr"]),
+    "com.sun.glass.ui.Clipboard": ({"contentChanged": [], "actionPerformed": ["int"]}, ["name"]),
+    "java.lang.Throwable": ({}, []),
+}
+for owner, (methods, fields) in clipboard_callbacks.items():
+    entry = next((item for item in metadata["reflection"] if item["type"] == owner), {})
+    registered = entry.get("methods", [])
+    if not entry.get("jniAccessible") or any(
+        {"name": name, "parameterTypes": args} not in registered for name, args in methods.items()
+    ) or any({"name": name} not in entry.get("fields", []) for name in fields):
+        issues.append(f"Missing Windows clipboard JNI registration on {owner}")
 if issues:
     parser.exit(1, "\n".join(issues) + "\n")
 print(f"Verified {len(loaders)} shader loaders, reflection signatures, and objects in {expected_name}")

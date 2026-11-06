@@ -4165,6 +4165,75 @@
           "parameterTypes": []
         }
       ]
+    },
+    {
+      "type": "com.sun.glass.ui.win.WinDnDClipboard",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "getInstance",
+          "parameterTypes": []
+        },
+        {
+          "name": "getDragButton",
+          "parameterTypes": []
+        },
+        {
+          "name": "setDragButton",
+          "parameterTypes": [
+            "int"
+          ]
+        },
+        {
+          "name": "setSourceSupportedActions",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.glass.ui.win.WinSystemClipboard",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "fosSerialize",
+          "parameterTypes": [
+            "java.lang.String",
+            "long"
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "name": "ptr"
+        }
+      ]
+    },
+    {
+      "type": "com.sun.glass.ui.Clipboard",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "contentChanged",
+          "parameterTypes": []
+        },
+        {
+          "name": "actionPerformed",
+          "parameterTypes": [
+            "int"
+          ]
+        }
+      ],
+      "fields": [
+        {
+          "name": "name"
+        }
+      ]
+    },
+    {
+      "type": "java.lang.Throwable",
+      "jniAccessible": true
     }
   ],
   "resources": [
